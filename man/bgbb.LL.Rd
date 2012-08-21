@@ -1,0 +1,88 @@
+\name{bgbb.LL}
+\alias{bgbb.LL}
+\alias{bgbb.rf.matrix.LL}
+\title{BG/BB Log-Likelihood}
+\usage{
+  bgbb.rf.matrix.LL(params, rf.matrix)
+
+  bgbb.LL(params, x, t.x, n.cal)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{rf.matrix}{recency-frequency matrix. It must
+  contain columns for frequency ("x"), recency ("t.x"),
+  number of transaction opportunities in the calibration
+  period ("n.cal"), and the number of customers with this
+  combination of recency, frequency and transaction
+  opportunities in the calibration period ("custs"). Note
+  that recency must be the time between the start of the
+  calibration period and the customer's last transaction,
+  not the time between the customer's last transaction and
+  the end of the calibration period.}
+
+  \item{x}{the number of repeat transactions made by the
+  customer in the calibration period. Can also be vector of
+  frequencies - see details.}
+
+  \item{t.x}{recency - the transaction opportunity in which
+  the customer made their last transaction. Can also be a
+  vector of recencies - see details.}
+
+  \item{n.cal}{number of transaction opportunities in the
+  calibration period. Can also be a vector of calibration
+  period transaction opportunities - see details.}
+}
+\value{
+  For \code{bgbb.cbs.LL}, the total log-likelihood of the
+  provided data. For \code{bgbb.LL}, a vector of
+  log-likelihoods as long as the longest input vector
+  (\code{x}, \code{t.x}, or \code{n.cal}).
+}
+\description{
+  Calculates the log-likelihood of the BG/BB model.
+}
+\details{
+  \code{x}, \code{t.x}, and \code{n.cal} may be vectors.
+  The standard rules for vector operations apply - if they
+  are not of the same length, shorter vectors will be
+  recycled (start over at the first element) until they are
+  as long as the longest vector. It is advisable to keep
+  vectors to the same length and to use single values for
+  parameters that are to be the same for all calculations.
+  If one of these parameters has a length greater than one,
+  the output will be also be a vector.
+}
+\examples{
+data(donationsSummary)
+
+rf.matrix <- donationsSummary$rf.matrix
+# donationsSummary$rf.matrix already has appropriate column names
+
+params <- c(1.20, 0.75, 0.66, 2.78)
+bgbb.rf.matrix.LL(params, rf.matrix)
+
+# Returns the log likelihood of the parameters for a customer who
+# made 3 transactions in a calibration period with 6 transaction opportunities,
+# with the last transaction occurring during the 4th transaction opportunity.
+bgbb.LL(params, x=3, t.x=4, n.cal=6)
+
+# We can also give vectors as function parameters:
+set.seed(7)
+x <- sample(1:3, 10, replace = TRUE)
+t.x <- sample(3:5, 10, replace = TRUE)
+n.cal <- rep(5, 10)
+bgbb.LL(params, x, t.x, n.cal)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+}
+

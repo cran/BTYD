@@ -1,0 +1,48 @@
+\name{dc.FilterCustByBirth}
+\alias{dc.FilterCustByBirth}
+\title{Filter Customer by Birth}
+\usage{
+  dc.FilterCustByBirth(elog, cohort.birth.per)
+}
+\arguments{
+  \item{elog}{event log, which is a data frame with columns
+  for customer ID ("cust"), date ("date"), and optionally
+  other columns such as "sales". Each row represents an
+  event, such as a transaction. The date column must be
+  formatted as Date objects.}
+
+  \item{cohort.birth.per}{Time interval used to filter the
+  event log. Can be specified as a Date object or a vector
+  of two Dates. If one date object is used, the birth
+  period is from the minimum date in the dataset through
+  the given date. If two dates are given, the birth period
+  is set between (inclusive) the two dates.}
+}
+\value{
+  event log with only rows from customers who made their
+  first transaction within the birth period. # Create event
+  log from file "cdnowElog.csv", which has # customer IDs
+  in the second column, dates in the third column, and #
+  sales numbers in the fifth column. elog <-
+  dc.ReadLines(system.file("data/cdnowElog.csv",
+  package="BTYD"),2,3,5)
+
+  # converting the date column to Date objects is #
+  necessary for this function. elog$date <-
+  as.Date(elog$date, "%Y%m%d")
+
+  # starting date. Note that it must be a Date object.
+  start.date <- as.Date("1997-01-01") # ending date. Note
+  that it must be a Date object. end.date <-
+  as.Date("1997-01-31")
+
+  # Filter the elog to include only customers who made
+  their # first transaction in January 1997 filtered.elog
+  <- dc.FilterCustByBirth(elog, c(start.date, end.date))
+}
+\description{
+  Filters an event log, keeping all transactions made by
+  customers who made their first transactions in the given
+  time interval.
+}
+

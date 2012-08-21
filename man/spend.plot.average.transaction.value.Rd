@@ -1,0 +1,53 @@
+\name{spend.plot.average.transaction.value}
+\alias{spend.plot.average.transaction.value}
+\title{Plot Actual vs. Expected Average Transaction Value}
+\usage{
+  spend.plot.average.transaction.value(params, m.x.vector,
+    x.vector, xlab = "Average Transaction Value",
+    ylab = "Marginal Distribution of Average Transaction Value",
+    title = "Actual vs. Expected Average Transaction Value Across Customers")
+}
+\arguments{
+  \item{params}{a vector of gamma-gamma parameters: p, q,
+  and gamma, in that order. p is the shape parameter for
+  each transaction. The scale parameter for each
+  transaction is distributed across customers according to
+  a gamma distribution with parameters q (shape) and gamma
+  (scale).}
+
+  \item{m.x.vector}{a vector with each customer's average
+  observed transaction value in the calibration period.}
+
+  \item{x.vector}{a vector with the number of transactions
+  each customer made in the calibration period. Must
+  correspond to m.x.vector in terms of ordering of
+  customers and length of the vector.}
+
+  \item{xlab}{descriptive label for the x axis.}
+
+  \item{ylab}{descriptive label for the y axis.}
+
+  \item{title}{title placed on the top-center of the plot.}
+}
+\value{
+  a vector with the probability of each customer's average
+  transaction value.
+}
+\description{
+  Plots the actual and expected densities of average
+  transaction values, and returns a vector with each
+  customer's average transaction value probability.
+}
+\examples{
+data(cdnowSummary)
+ave.spend <- cdnowSummary$m.x
+tot.trans <- cdnowSummary$cbs[,"x"]
+params <- c(6.25, 3.74, 15.44)
+
+# Plot the actual and expected average transaction value across customers.
+f.m.x <- spend.plot.average.transaction.value(params, ave.spend, tot.trans)
+}
+\seealso{
+  \code{\link{spend.marginal.likelihood}}
+}
+

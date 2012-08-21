@@ -1,0 +1,47 @@
+\name{dc.ReadLines}
+\alias{dc.ReadLines}
+\title{Read Lines}
+\usage{
+  dc.ReadLines(csv.filename, cust.idx, date.idx,
+    sales.idx = -1)
+}
+\arguments{
+  \item{csv.filename}{filename of the comma-delimited file
+  to be read. It must contain headers.}
+
+  \item{cust.idx}{index of the customer ID column in the
+  comma-delimited file.}
+
+  \item{date.idx}{index of the date column in the
+  comma-delimited file.}
+
+  \item{sales.idx}{index of the sales column in the
+  comma-delimited file.}
+}
+\value{
+  Event log with columns labelled "cust" and "date". If
+  sales data is included in the comma-delimited file, a
+  "sales" column is included in the event log.
+}
+\description{
+  Given a .csv file that throws errors when read in by the
+  usual read.csv and read.table methods, loops through the
+  file line-by-line and picks out the customer, date, and
+  sales (optional) transaction data to return an event log.
+}
+\details{
+  Once this function has been run, you may need to convert
+  the date column to Date objects for the event log to work
+  with other functions in this library. See the as.Date
+  function in the main package for more details.
+}
+\examples{
+# Create event log from file "cdnowElog.csv", which has
+# customer IDs in the second column, dates in the third column, and
+# sales numbers in the fifth column.
+elog <- dc.ReadLines(system.file("data/cdnowElog.csv", package="BTYD"),2,3,5)
+
+# convert date column to date objects, as required by some other functions
+elog$date <- as.Date(elog$date, "$Y\%m\%d")
+}
+

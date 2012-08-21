@@ -1,0 +1,79 @@
+\name{bgbb.ConditionalExpectedTransactions}
+\alias{bgbb.ConditionalExpectedTransactions}
+\title{BG/BB Conditional Expected Transactions}
+\usage{
+  bgbb.ConditionalExpectedTransactions(params, n.cal,
+    n.star, x, t.x)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{n.cal}{number of transaction opportunities in the
+  calibration period, or a vector of calibration period
+  transaction opportunities.}
+
+  \item{n.star}{number of transaction opportunities in the
+  holdout period, or a vector of holdout period transaction
+  opportunities.}
+
+  \item{x}{number of repeat transactions the customer made
+  in the calibration period, or a vector of calibration
+  period transaction frequencies.}
+
+  \item{t.x}{recency - the last transaction opportunity in
+  which this customer made a transaction, or a vector of
+  recencies.}
+}
+\value{
+  The number of transactions a customer is expected to make
+  in the \code{n.star} transaction opportunities following
+  the calibration period, conditional on their behavior
+  during the calibration period.
+}
+\description{
+  Calculates the number of expected transactions in the
+  holdout period, conditional on a customer's behavior in
+  the calibration period.
+}
+\details{
+  E(X(n, n+n*) | alpha, beta, gamma, delta, x, t.x, n).
+  This function requires the holdout period to immediately
+  follow the calibration period.
+
+  \code{n.cal}, \code{n.star}, \code{x}, and \code{t.x} may
+  be vectors. The standard rules for vector operations
+  apply - if they are not of the same length, shorter
+  vectors will be recycled (start over at the first
+  element) until they are as long as the longest vector. It
+  is advisable to keep vectors to the same length and to
+  use single values for parameters that are to be the same
+  for all calculations. If one of these parameters has a
+  length greater than one, the output will be a vector of
+  probabilities.
+}
+\examples{
+params <- c(1.20, 0.75, 0.66, 2.78)
+# the number of transactions a customer is expected
+# to make in the 10 transaction opportunities
+# following the calibration period, which consisted
+# of 6 transaction opportunities (during which they
+# made 3 transactions, the last of which occurred
+# in the 4th opportunity)
+bgbb.ConditionalExpectedTransactions(params, n.cal=6, n.star=10, x=3, t.x=4)
+
+# We can also use vectors as input:
+bgbb.ConditionalExpectedTransactions(params, n.cal=6, n.star=1:10, x=3, t.x=4)
+bgbb.ConditionalExpectedTransactions(params, n.cal=6, n.star=10, x=1:4, t.x=4)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+}
+

@@ -1,0 +1,34 @@
+\name{bgbb.PlotTransactionRateHeterogeneity}
+\alias{bgbb.PlotTransactionRateHeterogeneity}
+\title{BG/BB Plot Transaction Rate Heterogeneity}
+\usage{
+  bgbb.PlotTransactionRateHeterogeneity(params)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+}
+\value{
+  Distribution of customers' propensities to purchase.
+}
+\description{
+  Plots and returns the estimated beta distribution of P
+  (customers' propensities to purchase).
+}
+\details{
+  This returns the distribution of each customer's
+  Bernoulli parameter, which determines the level of their
+  purchasing (using the BG/BB assumption that purchasing on
+  the individual level can be modeled with a Bernoulli
+  distribution).
+}
+\examples{
+params <- c(1.2, 0.75, 0.66, 2.78)
+bgbb.PlotTransactionRateHeterogeneity(params)
+params <- c(0.2, 1.5, 3.2, 6)
+bgbb.PlotTransactionRateHeterogeneity(params)
+}
+

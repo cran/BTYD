@@ -1,0 +1,31 @@
+\name{dc.BuildCBTFromElog}
+\alias{dc.BuildCBTFromElog}
+\title{Build Customer-by-Time Matrix from Event Log}
+\usage{
+  dc.BuildCBTFromElog(elog, statistic = "freq")
+}
+\arguments{
+  \item{elog}{event log, which is a data frame with columns
+  for customer ID ("cust"), date ("date"), and optionally
+  other columns such as "sales". Each row represents an
+  event, such as a transaction.. For the total spend and
+  average spend matrices, the event log must have a "sales"
+  column. If the dates are not formatted to be in the order
+  year-month-day, the columns of the customer-by-time
+  matrix may not be ordered chronologically if the "date"
+  column does not consist of date objects (R will order
+  them alphabetically). This will cause problems with other
+  functions, so it is better to convert the date column to
+  date objects before running this function.}
+
+  \item{statistic}{either "freq", "reach", "total.spend",
+  or "average.spend". This determines what type of
+  customer-by-time matrix is returned.}
+}
+\value{
+  Customer-by-time matrix.
+}
+\description{
+  Creates a customer-by-time matrix from an event long.
+}
+

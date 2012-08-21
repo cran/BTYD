@@ -1,0 +1,76 @@
+\name{spend.LL}
+\alias{spend.LL}
+\title{Spend Log-Likelihood}
+\usage{
+  spend.LL(params, m.x, x)
+}
+\arguments{
+  \item{params}{a vector of gamma-gamma parameters: p, q,
+  and gamma, in that order. p is the shape parameter for
+  each transaction. The scale parameter for each
+  transaction is distributed across customers according to
+  a gamma distribution with parameters q (shape) and gamma
+  (scale).}
+
+  \item{m.x}{a customer's average observed transaction
+  value in the calibration period, or a vector of average
+  observed transaction values - see details.}
+
+  \item{x}{the number of transactions a customer made in
+  the calibration period or a vector of frequencies - see
+  details.}
+}
+\value{
+  The log-likelihood of the gamma-gamma model. If
+  \code{m.x} or \code{x} has a length greater than 1, this
+  is a vector of log-likelihoods.
+}
+\description{
+  Calculates the log-likelihood of the gamma-gamma model
+  for customer spending.
+}
+\details{
+  \code{m.x} and \code{x} may be vectors. The standard
+  rules for vector operations apply - if they are not of
+  the same length, the shorter vector will be recycled
+  (start over at the first element) until it is as long as
+  the longest vector. It is advisable to keep vectors to
+  the same length and to use single values for parameters
+  that are to be the same for all calculations. If one of
+  these parameters has a length greater than one, the
+  output will be a vector of log-likelihoods.
+}
+\examples{
+data(cdnowSummary)
+ave.spend <- cdnowSummary$m.x;
+tot.trans <- cdnowSummary$cbs[,"x"];
+params <- c(6.25, 3.74, 15.44);
+
+# get the total log-likelihood of the data and parameters
+# above. There will be many warnings due to the zeroes that are
+# included in the data. If you wish to avoid these warnings, use:
+
+# ave.spend <- ave.spend[which(tot.trans > 0)];
+# and
+# tot.trans <- tot.trans[which(tot.trans > 0)];
+
+# Note that we used tot.trans to remove the zeroes from ave.spend.
+# This is because we need the vectors to be the same length, and it
+# is possible that your data include customers who made transactions
+# worth zero dollars (in which case the vector lengths would differ
+# if we used ave.spend to remove the zeroes from ave.spend).
+
+sum(spend.LL(params, ave.spend, tot.trans))
+
+# This log-likelihood may be different than mentioned in the
+# referenced paper; in the paper, a slightly different function
+# which relies on total spend (not average spend) is used.
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Ka L. Lee.
+  \dQuote{RFM and CLV: Using Iso-Value Curves for Customer
+  Base Analysis.} \emph{Journal of Marketing Research}
+  Vol.42, pp.415-430. November. 2005.
+  \url{http://www.brucehardie.com/papers.html}
+}
+

@@ -1,0 +1,22 @@
+\name{dc.check.model.params}
+\alias{dc.check.model.params}
+\title{Check model params}
+\usage{
+  dc.check.model.params(printnames, params, func)
+}
+\arguments{
+  \item{printnames}{Names to print parameter errors}
+
+  \item{params}{model parameters}
+
+  \item{func}{Function calling dc.check.model.params}
+}
+\value{
+  stops program if there is something wrong with the
+  parameters
+}
+\description{
+  Check model parameters for correctness
+}
+\keyword{internal}
+

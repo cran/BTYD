@@ -1,0 +1,75 @@
+\name{bgbb.PlotFrequencyInCalibration}
+\alias{bgbb.PlotFrequencyInCalibration}
+\title{BG/BB Plot Frequency in Calibration Period}
+\usage{
+  bgbb.PlotFrequencyInCalibration(params, rf.matrix,
+    censor = NULL, plotZero = TRUE,
+    xlab = "Calibration period transactions",
+    ylab = "Customers",
+    title = "Frequency of Repeat Transactions")
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{rf.matrix}{recency-frequency matrix. It must
+  contain columns for frequency ("x"), recency ("t.x"),
+  number of transaction opportunities in the calibration
+  period ("n.cal"), and the number of customers with this
+  combination of recency, frequency and transaction
+  opportunities in the calibration period ("custs"). Note
+  that recency must be the time between the start of the
+  calibration period and the customer's last transaction,
+  not the time between the customer's last transaction and
+  the end of the calibration period.}
+
+  \item{censor}{optional. Any calibration period frequency
+  at this number, or above it, will be binned together. If
+  the censor number is greater than the maximum recency in
+  the recency-frequency matrix, the maximum recency will be
+  used as the censor number.}
+
+  \item{plotZero}{If FALSE, the histogram will exclude the
+  zero bin.}
+
+  \item{xlab}{descriptive label for the x axis.}
+
+  \item{ylab}{descriptive label for the y axis.}
+
+  \item{title}{title placed on the top-center of the plot.}
+}
+\value{
+  Calibration period repeat transaction frequency
+  comparison matrix (actual vs. expected).
+}
+\description{
+  Plots the actual and expected number of customers who
+  made a certain number of repeat transactions in the
+  calibration period. Also returns a matrix with this
+  comparison.
+}
+\examples{
+data(donationsSummary)
+
+rf.matrix <- donationsSummary$rf.matrix
+# donationsSummary$rf.matrix already has appropriate column names
+
+# starting-point parameters
+startingparams <- c(1, 1, 0.5, 3)
+# estimated parameters
+est.params <- bgbb.EstimateParameters(rf.matrix, startingparams)
+
+# plot actual vs. expected frequencies in the calibration period
+bgbb.PlotFrequencyInCalibration(est.params, rf.matrix)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+}
+

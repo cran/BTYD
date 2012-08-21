@@ -1,0 +1,26 @@
+\name{dc.SplitUpElogForRepeatTrans}
+\alias{dc.SplitUpElogForRepeatTrans}
+\title{Split Up Event Log for Repeat Transactions}
+\usage{
+  dc.SplitUpElogForRepeatTrans(elog)
+}
+\arguments{
+  \item{elog}{event log, which is a data frame with columns
+  for customer ID ("cust"), date ("date"), and optionally
+  other columns such as "sales". Each row represents an
+  event, such as a transaction. The "date" column must
+  contain date objects, not character strings or factors.}
+}
+\value{
+  list: \item{repeat.trans.elog}{an event log containing
+  only repeat transactions} \item{cust.data}{data frame
+  containing the first and last transaction information for
+  each customer}
+}
+\description{
+  Turns an event log into a repeat transaction event log,
+  removing customers' first transactions. Also returns a
+  data frame with information about customers' first and
+  last transactions.
+}
+

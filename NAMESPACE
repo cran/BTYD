@@ -1,0 +1,2 @@
+exportPattern("^[^\\.]")
+importFrom(gsl, hyperg_2F1)

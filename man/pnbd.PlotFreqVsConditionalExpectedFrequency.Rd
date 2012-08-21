@@ -1,0 +1,80 @@
+\name{pnbd.PlotFreqVsConditionalExpectedFrequency}
+\alias{pnbd.PlotFreqVsConditionalExpectedFrequency}
+\title{Pareto/NBD Plot Frequency vs. Conditional Expected Frequency}
+\usage{
+  pnbd.PlotFreqVsConditionalExpectedFrequency(params,
+    T.star, cal.cbs, x.star, censor,
+    xlab = "Calibration period transactions",
+    ylab = "Holdout period transactions", xticklab = NULL,
+    title = "Conditional Expectation")
+}
+\arguments{
+  \item{params}{Pareto/NBD parameters - a vector with r,
+  alpha, s, and beta, in that order. r and alpha are
+  unobserved parameters for the NBD transaction process. s
+  and beta are unobserved parameters for the Pareto
+  (exponential gamma) dropout process.}
+
+  \item{T.star}{length of then holdout period.}
+
+  \item{cal.cbs}{calibration period CBS (customer by
+  sufficient statistic). It must contain columns for
+  frequency ("x"), recency ("t.x"), and total time observed
+  ("T.cal"). Note that recency must be the time between the
+  start of the calibration period and the customer's last
+  transaction, not the time between the customer's last
+  transaction and the end of the calibration period.}
+
+  \item{x.star}{vector of transactions made by each
+  customer in the holdout period.}
+
+  \item{censor}{integer used to censor the data. See
+  details.}
+
+  \item{xlab}{descriptive label for the x axis.}
+
+  \item{ylab}{descriptive label for the y axis.}
+
+  \item{xticklab}{vector containing a label for each tick
+  mark on the x axis.}
+
+  \item{title}{title placed on the top-center of the plot.}
+}
+\value{
+  Holdout period transaction frequency comparison matrix
+  (actual vs. expected).
+}
+\description{
+  Plots the actual and conditional expected number
+  transactions made by customers in the holdout period,
+  binned according to calibration period frequencies. Also
+  returns a matrix with this comparison and the number of
+  customers in each bin.
+}
+\details{
+  This function requires a censor number, which cannot be
+  higher than the highest frequency in the calibration
+  period CBS. The output matrix will have (censor + 1)
+  bins, starting at frequencies of 0 transactions and
+  ending at a bin representing calibration period
+  frequencies at or greater than the censor number.
+}
+\examples{
+data(cdnowSummary)
+
+cal.cbs <- cdnowSummary$cbs
+# cal.cbs already has column names required by method
+
+# number of transactions by each customer in the 39 weeks
+# following the calibration period
+x.star <- cal.cbs[,"x.star"]
+
+# parameters estimated using pnbd.EstimateParameters
+est.params <- cdnowSummary$est.params
+# the maximum censor number that can be used
+max(cal.cbs[,"x"])
+
+# plot conditional expected holdout period frequencies, binned according to calibration period frequencies
+pnbd.PlotFreqVsConditionalExpectedFrequency(est.params, T.star=39, cal.cbs, x.star, censor=7)
+}
+

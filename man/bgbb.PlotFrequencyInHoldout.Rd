@@ -1,0 +1,78 @@
+\name{bgbb.PlotFrequencyInHoldout}
+\alias{bgbb.PlotFrequencyInHoldout}
+\title{BG/BB Plot Frequency in Holdout}
+\usage{
+  bgbb.PlotFrequencyInHoldout(params, n.cal,
+    rf.matrix.holdout, censor = NULL, plotZero = TRUE,
+    title = "Frequency of Repeat Transactions",
+    xlab = "Holdout period transactions",
+    ylab = "Customers")
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{n.cal}{number of transaction opportunities in the
+  calibration period.}
+
+  \item{rf.matrix.holdout}{holdout period recency-frequency
+  matrix. It must contain columns for frequency in the
+  holdout period ("x.star"), the number of transaction
+  opportunities in the holdout period ("n.star"), and the
+  number of customers with each frequency ("custs").}
+
+  \item{censor}{optional. Any calibration period frequency
+  at this number, or above it, will be binned together. If
+  the censor number is greater than the maximum recency in
+  the recency-frequency matrix, the maximum recency will be
+  used as the censor number.}
+
+  \item{plotZero}{If FALSE, the histogram will exclude the
+  zero bin.}
+
+  \item{title}{title placed on the top-center of the plot.}
+
+  \item{xlab}{descriptive label for the x axis.}
+
+  \item{ylab}{descriptive label for the y axis.}
+}
+\value{
+  Holdout period repeat transaction frequency comparison
+  matrix (actual vs. expected).
+}
+\description{
+  Plots the actual and expected number of customers who
+  made a certain number of transactions in the holdout
+  period, binned according to holdout period frequencies.
+  Also returns a matrix with this comparison and the number
+  of customers in each bin.
+}
+\examples{
+data(donationsSummary)
+
+rf.matrix <- donationsSummary$rf.matrix
+rf.matrix.holdout <- donationsSummary$rf.matrix.holdout
+# donationsSummary$rf.matrix and donationsSummary$rf.matrix.holdout already
+# have appropriate column names
+
+# starting-point parameters
+startingparams <- c(1, 1, 0.5, 3)
+# estimated parameters
+est.params <- bgbb.EstimateParameters(rf.matrix, startingparams)
+
+# number of periods in the calibration period
+n.cal = max(rf.matrix[,"n.cal"])
+
+bgbb.PlotFrequencyInHoldout (est.params, n.cal, rf.matrix.holdout)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+}
+

@@ -1,0 +1,89 @@
+\name{dc.BuildCBSFromCBTAndDates}
+\alias{dc.BuildCBSFromCBTAndDates}
+\title{Build CBS matrix from CBT matrix}
+\usage{
+  dc.BuildCBSFromCBTAndDates(cbt, dates, per,
+    cbt.is.during.cal.period = TRUE)
+}
+\arguments{
+  \item{cbt}{customer-by-time matrix. This is a matrix
+  consisting of a row per customer and a column per time
+  period. It should contain numeric information about a
+  customer's transactions in every time period - either the
+  number of transactions in that time period (frequency), a
+  1 to indicate that at least 1 transaction occurred
+  (reach), or the average/total amount spent in that time
+  period.}
+
+  \item{dates}{if cbt.is.during.cal.period is TRUE, then
+  dates is a data frame with three columns: 1. the dates
+  when customers made their first purchases 2. the dates
+  when customers made their last purchases 3. the date of
+  the end of the calibration period. if
+  cbt.is.during.cal.period is FALSE, then dates is a vector
+  with two elements: 1. the date of the beginning of the
+  holdout period 2. the date of the end of the holdout
+  period.}
+
+  \item{per}{interval of time for
+  customer-by-sufficient-statistic matrix. May be "day",
+  "week", "month", "quarter", or "year".}
+
+  \item{cbt.is.during.cal.period}{if TRUE, indicates the
+  customer-by-time matrix is from the calibration period.
+  If FALSE, indicates the customer-by-time matrix is from
+  the holdout period.}
+}
+\value{
+  Customer-by-sufficient-statistic matrix, with three
+  columns: frequency("x"), recency("t.x") and total time
+  observed("T.cal"). See details. Frequency is total
+  transactions, not repeat transactions.
+}
+\description{
+  Given a customer-by-time matrix, yields the resulting
+  customer-by-sufficient-statistic matrix.
+}
+\details{
+  The customer-by-sufficient statistic matrix will contain
+  the sum of the statistic included in the customer-by-time
+  matrix (see the cbt parameter), the customer's last
+  transaction date, and the total time period for which the
+  customer was observed.
+}
+\examples{
+elog <- dc.ReadLines(system.file("data/cdnowElog.csv", package="BTYD"),2,3,5)
+elog[,"date"] <- as.Date(elog[,"date"], "\%Y\%m\%d")
+
+# Transaction-flow models are about interpurchase times. Since we
+# only know purchase times to the day, we merge all transaction on
+# the same day. This example uses dc.MergeTransactionsOnSameDate
+# to illustrate this; however, we could have simply used dc.CreateReachCBT
+# instead of dc.CreateFreqCBT to obtain the same result.
+merged.elog <- dc.MergeTransactionsOnSameDate(elog)
+cutoff.date <- as.Date("1997-09-30")
+freq.cbt <- dc.CreateFreqCBT(merged.elog)
+cal.freq.cbt <- freq.cbt[,as.Date(colnames(freq.cbt)) <= cutoff.date]
+holdout.freq.cbt <- freq.cbt[,as.Date(colnames(freq.cbt)) > cutoff.date]
+
+cal.start.dates.indices <- dc.GetFirstPurchasePeriodsFromCBT(cal.freq.cbt)
+cal.start.dates <- as.Date(colnames(cal.freq.cbt)[cal.start.dates.indices])
+cal.end.dates.indices <- dc.GetLastPurchasePeriodsFromCBT(cal.freq.cbt)
+cal.end.dates <- as.Date(colnames(cal.freq.cbt)[cal.end.dates.indices])
+T.cal.total <- rep(cutoff.date, nrow(cal.freq.cbt))
+cal.dates <- data.frame(cal.start.dates, cal.end.dates, T.cal.total)
+
+# Create calibration period customer-by-sufficient-statistic data frame, using weeks as the unit of time.
+cal.cbs <- dc.BuildCBSFromCBTAndDates(cal.freq.cbt, cal.dates, per="week", cbt.is.during.cal.period=TRUE)
+# Force the calibration period customer-by-sufficient-statistic to only contain repeat transactions
+# (required by BG/BB and Pareto/NBD models)
+cal.cbs[,"x"] <- cal.cbs[,"x"] - 1
+
+holdout.start <- cutoff.date+1
+holdout.end <- as.Date(colnames(holdout.freq.cbt)[ncol(holdout.freq.cbt)])
+holdout.dates <- c(holdout.start, holdout.end)
+
+# Create holdout period customer-by-sufficient-statistic data frame, using weeks as the unit of time.
+holdout.cbs <- dc.BuildCBSFromCBTAndDates(holdout.freq.cbt, holdout.dates, per="week", cbt.is.during.cal.period=FALSE)
+}
+

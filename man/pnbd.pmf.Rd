@@ -1,0 +1,62 @@
+\name{pnbd.pmf}
+\alias{pnbd.pmf}
+\title{Pareto/NBD Probability Mass Function}
+\usage{
+  pnbd.pmf(params, t, x)
+}
+\arguments{
+  \item{params}{Pareto/NBD parameters - a vector with r,
+  alpha, s, and beta, in that order. r and alpha are
+  unobserved parameters for the NBD transaction process. s
+  and beta are unobserved parameters for the Pareto
+  (exponential gamma) dropout process.}
+
+  \item{t}{length end of time period for which probability
+  is being computed. May also be a vector.}
+
+  \item{x}{number of repeat transactions by a random
+  customer in the period defined by t. May also be a
+  vector.}
+}
+\value{
+  Probability of X(t)=x conditional on model parameters. If
+  t and/or x has a length greater than one, a vector of
+  probabilities will be returned.
+}
+\description{
+  Probability mass function for the Pareto/NBD.
+}
+\details{
+  P(X(t)=x | r, alpha, s, beta). Returns the probability
+  that a customer makes x repeat transactions in the time
+  interval (0, t].
+
+  Parameters \code{t} and \code{x} may be vectors. The
+  standard rules for vector operations apply - if they are
+  not of the same length, the shorter vector will be
+  recycled (start over at the first element) until it is as
+  long as the longest vector. It is advisable to keep
+  vectors to the same length and to use single values for
+  parameters that are to be the same for all calculations.
+  If one of these parameters has a length greater than one,
+  the output will be a vector of probabilities.
+}
+\examples{
+params <- c(0.55, 10.56, 0.61, 11.64)
+# probability that a customer will make 10 repeat transactions in the
+# time interval (0,2]
+pnbd.pmf(params, t=2, x=10)
+# probability that a customer will make no repeat transactions in the
+# time interval (0,39]
+pnbd.pmf(params, t=39, x=0)
+
+# Vectors may also be used as arguments:
+pnbd.pmf(params, t=30, x=11:20)
+}
+\references{
+  Fader, Peter S., and Bruce G.S. Hardie. \dQuote{Deriving
+  an Expression for P (X(t) = x) Under the Pareto/NBD
+  Model.} Sept. 2006. Web.
+  \url{http://www.brucehardie.com/notes/012/}
+}
+

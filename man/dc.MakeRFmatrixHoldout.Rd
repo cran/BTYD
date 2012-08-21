@@ -1,0 +1,25 @@
+\name{dc.MakeRFmatrixHoldout}
+\alias{dc.MakeRFmatrixHoldout}
+\title{Make Holdout Period Recency-Frequency Matrix}
+\usage{
+  dc.MakeRFmatrixHoldout(holdout.cbt)
+}
+\arguments{
+  \item{holdout.cbt}{holdout period frequency
+  customer-by-time matrix. This is a matrix consisting of a
+  row per customer and a column per time period. It should
+  contain the number of transactions each customer made per
+  time period.}
+}
+\value{
+  recency-frequency matrix for the holdout period, with
+  three columns: frequency ("x.star"), recency
+  ("t.x.star"), number of transaction opportunities in the
+  holdout period ("n.star"), and the number of customers
+  with each frequency-recency combination ("custs").
+}
+\description{
+  Creates a recency-frequency matrix for the holdout
+  period.
+}
+

@@ -1,0 +1,4 @@
+%\VignetteIndexEntry{Introductory BG/BB and Pareto/NBD function usage}
+\documentclass{article}
+\begin{document}
+\end{document}

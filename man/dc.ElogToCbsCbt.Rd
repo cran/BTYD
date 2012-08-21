@@ -1,0 +1,77 @@
+\name{dc.ElogToCbsCbt}
+\alias{dc.ElogToCbsCbt}
+\title{Convernt Event Log to CBS and CBT Matrices}
+\usage{
+  dc.ElogToCbsCbt(elog, per = "week",
+    T.cal = max(elog$date), T.tot = max(elog$date),
+    merge.same.date = TRUE, cohort.birth.per = T.cal,
+    dissipate.factor = 1, statistic = "freq")
+}
+\arguments{
+  \item{elog}{event log, which is a data frame with columns
+  for customer ID ("cust"), date ("date"), and optionally
+  other columns such as "sales". Each row represents an
+  event, such as a transaction. The "date" column must
+  contain date objects, not character strings or factors.}
+
+  \item{per}{interval of time for
+  customer-by-sufficient-statistic matrix. May be "day",
+  "week", "month", "quarter", or "year".}
+
+  \item{T.cal}{R date object indicating when the
+  calibration period ends.}
+
+  \item{T.tot}{R date object indicating when holdout period
+  ends.}
+
+  \item{merge.same.date}{If TRUE, transactions from the
+  same period count as a single transaction instead of
+  counting as multiple transactions.}
+
+  \item{cohort.birth.per}{Time interval used to filter the
+  event log. Can be specified as a Date object or a vector
+  of two Dates. If one date object is used, the birth
+  period is from the minimum date in the dataset through
+  the given date. If two dates are given, the birth period
+  is set between (inclusive) the two dates.}
+
+  \item{dissipate.factor}{integer indicating how much of
+  the dataset to eliminate. If left as 1, none of the
+  dataset is eliminated.
+  (dissipate.factor-1)/(dissipate.factor) events will be
+  removed from the event log. For example, if 2 is
+  provided, 1/2 of the event log is eliminated, and if 10
+  is provided, 9/10 of the event log is eliminated.}
+
+  \item{statistic}{Determines type of CBT returned: can be:
+  "reach", "freq", "total.spend", or "average.spend."
+  (note: spend requires $sales column in elog)}
+}
+\value{
+  A list of items: \item{$cal}{list with CBS and CBT from
+  the calibration period} \item{$holdout}{list with CBS and
+  CBT from holdout period} \item{$cust.data}{data frame
+  with each customer's first and last transaction details}
+}
+\description{
+  Uses an event log to return calibration period CBT and
+  CBS, holdout period CBT and CBS, and summary data for
+  each customer (including times of first and last
+  transactions).
+}
+\details{
+  This function automatically removes customers' first
+  transactions, meaning that the output matrices will only
+  contain repeat transaction information.
+}
+\examples{
+# Create event log from file "cdnowElog.csv", which has
+# customer IDs in the second column, dates in the third column, and
+# sales numbers in the fifth column.
+elog <- dc.ReadLines(system.file("data/cdnowElog.csv", package="BTYD"),2,3,5)
+
+elog[,"date"] <- as.Date(elog[,"date"], "\%Y\%m\%d")
+
+data <- dc.ElogToCbsCbt(elog, per="week", T.cal=as.Date("1997-09-30"))
+}
+

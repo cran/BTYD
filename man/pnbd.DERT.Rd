@@ -1,0 +1,82 @@
+\name{pnbd.DERT}
+\alias{pnbd.DERT}
+\title{Pareto/NBD Discounted Expected Residual Transactions}
+\usage{
+  pnbd.DERT(params, x, t.x, T.cal, d)
+}
+\arguments{
+  \item{params}{Pareto/NBD parameters - a vector with r,
+  alpha, s, and beta, in that order. r and alpha are
+  unobserved parameters for the NBD transaction process. s
+  and beta are unobserved parameters for the Pareto
+  (exponential gamma) dropout process.}
+
+  \item{x}{the number of repeat transactions a customer
+  made in the calibration period, or a vector of
+  transaction frequencies.}
+
+  \item{t.x}{recency: the time of the customer's last
+  transaction in the calibration period, or a vector of
+  recencies.}
+
+  \item{T.cal}{the length of the calibration period, or a
+  vector of calibration period lengths. Make sure that the
+  lengths of time periods for all parameters match.}
+
+  \item{d}{the discount rate to be used. Make sure that it
+  matches up with your chosen time period (do not use an
+  annual rate for monthly data, for example).}
+}
+\value{
+  The number of discounted expected residual transactions
+  for a customer with a particular purchase pattern during
+  the calibration period.
+}
+\description{
+  Calculates the discounted expected residual transactions
+  of a customer, given their behavior during the
+  calibration period.
+}
+\details{
+  DERT(d | r, alpha, s, beta, X = x, t.x, T.cal)
+
+  \code{x}, \code{t.x}, \code{T.cal} may be vectors. The
+  standard rules for vector operations apply - if they are
+  not of the same length, shorter vectors will be recycled
+  (start over at the first element) until they are as long
+  as the longest vector. It is advisable to keep vectors to
+  the same length and to use single values for parameters
+  that are to be the same for all calculations. If one of
+  these parameters has a length greater than one, the
+  output will be also be a vector.
+}
+\examples{
+params <- c(0.5629966, 12.5590370, 0.4081095, 10.5148048)
+
+# 15\% compounded annually has been converted to 0.0027 compounded continously,
+# as we are dealing with weekly data and not annual data.
+d <- 0.0027
+
+# calculate the discounted expected residual transactions of a customer
+# who made 7 transactions in a calibration period that was 77.86
+# weeks long, with the last transaction occurring at the end of
+# the 35th week.
+pnbd.DERT(params, x=7, t.x=35, T.cal=77.86, d)
+
+# We can also use vectors to compute DERT for several customers:
+pnbd.DERT(params, x=1:10, t.x = 30, T.cal=77.86, d)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Ka L. Lee.
+  \dQuote{RFM and CLV: Using Iso-Value Curves for Customer
+  Base Analysis.} \emph{Journal of Marketing Research}
+  Vol.42, pp.415-430. November. 2005.
+  \url{http://www.brucehardie.com/papers.html}
+
+  See equation 2.
+
+  Note that this paper refers to what this package is
+  calling discounted expected residual transactions (DERT)
+  simply as discounted expected transactions (DET).
+}
+

@@ -1,0 +1,59 @@
+\name{bgbb.pmf}
+\alias{bgbb.pmf}
+\title{BG/BB Probability Mass Function}
+\usage{
+  bgbb.pmf(params, n, x)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{x}{number of transactions; may also be a vector.}
+
+  \item{n}{number of transaction opportunities; may also be
+  a vector.}
+}
+\value{
+  Probability of X(n)=x, conditional on model parameters.
+}
+\description{
+  Probability mass function for the BG/BB.
+}
+\details{
+  P(X(n)=x | alpha, beta, gamma, delta). Returns the
+  probability that a customer makes x transactions in the
+  first n transaction opportunities.
+
+  Parameters \code{t} and \code{x} may be vectors. The
+  standard rules for vector operations apply - if they are
+  not of the same length, the shorter vector will be
+  recycled (start over at the first element) until it is as
+  long as the longest vector. It is advisable to keep
+  vectors to the same length and to use single values for
+  parameters that are to be the same for all calculations.
+  If one of these parameters has a length greater than one,
+  the output will be a vector of probabilities.
+}
+\examples{
+params <- c(1.20, 0.75, 0.66, 2.78)
+# The probability that a customer made 3 transactions in the first
+# 6 transaction opportunities.
+bgbb.pmf(params, n=6, x=3)
+
+# Vectors may also be used as arguments:
+bgbb.pmf(params, n=6, x=0:6)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+}
+\seealso{
+  \code{\link{bgbb.pmf.General}}
+}
+

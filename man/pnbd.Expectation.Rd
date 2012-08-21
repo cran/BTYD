@@ -1,0 +1,47 @@
+\name{pnbd.Expectation}
+\alias{pnbd.Expectation}
+\title{Pareto/NBD Expectation}
+\usage{
+  pnbd.Expectation(params, t)
+}
+\arguments{
+  \item{params}{Pareto/NBD parameters - a vector with r,
+  alpha, s, and beta, in that order. r and alpha are
+  unobserved parameters for the NBD transaction process. s
+  and beta are unobserved parameters for the Pareto
+  (exponential gamma) dropout process.}
+
+  \item{t}{length of time for which we are calculating the
+  expected number of repeat transactions.}
+}
+\value{
+  Number of repeat transactions a customer is expected to
+  make in a time period of length t.
+}
+\description{
+  Returns the number of repeat transactions that a randomly
+  chosen customer (for whom we have no prior information)
+  is expected to make in a given time period.
+}
+\details{
+  E(X(t) | r, alpha, s, beta)
+}
+\examples{
+params <- c(0.55, 10.56, 0.61, 11.64)
+
+# Number of repeat transactions a customer is expected to make in 2 time intervals.
+pnbd.Expectation(params, t=2)
+
+# We can also compare expected transactions over time:
+pnbd.Expectation(params, t=1:10)
+}
+\references{
+  Fader, Peter S., and Bruce G.S. Hardie. \dQuote{A Note on
+  Deriving the Pareto/NBD Model and Related Expressions.}
+  November. 2005. Web.
+  \url{http://www.brucehardie.com/notes/008/}
+}
+\seealso{
+  \code{\link{pnbd.ConditionalExpectedTransactions}}
+}
+

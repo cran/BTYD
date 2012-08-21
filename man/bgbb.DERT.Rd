@@ -1,0 +1,101 @@
+\name{bgbb.DERT}
+\alias{bgbb.DERT}
+\alias{bgbb.rf.matrix.DERT}
+\title{BG/BB Discounted Expected Residual Transactions}
+\usage{
+  bgbb.DERT(params, x, t.x, n.cal, d)
+
+  bgbb.rf.matrix.DERT(params, rf.matrix, d)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+
+  \item{x}{number of repeat transactions a customer made in
+  the calibration period, or a vector of calibration period
+  transaction frequencies.}
+
+  \item{t.x}{recency - the last transaction opportunity in
+  which a customer made a transaction, or a vector of
+  recencies.}
+
+  \item{n.cal}{number of transaction opportunities in the
+  calibration period, or a vector of calibration period
+  transaction opportunities.}
+
+  \item{d}{discount rate.}
+
+  \item{rf.matrix}{recency-frequency matrix. It must
+  contain columns for frequency ("x"), recency ("t.x"), and
+  the number of transaction opportunities in the
+  calibration period ("n.cal"). Note that recency must be
+  the time between the start of the calibration period and
+  the customer's last transaction, not the time between the
+  customer's last transaction and the end of the
+  calibration period.}
+}
+\value{
+  The present value of the expected future transaction
+  stream for a particular customer.
+}
+\description{
+  Computes the number of discounted expected residual
+  transactions by a customer, conditional on their behavior
+  in the calibration period.
+}
+\details{
+  DERT(d | alpha, beta, gamma, delta, x, t.x, n). This is
+  the present value of the expected future transaction
+  stream for a customer with \code{x} transactions and a
+  recency of \code{t.x} in \code{n.cal} transaction
+  opportunities, discounted by a rate \code{d}.
+
+  \code{x}, \code{t.x}, and \code{n.cal} may be vectors.
+  The standard rules for vector operations apply - if they
+  are not of the same length, shorter vectors will be
+  recycled (start over at the first element) until they are
+  as long as the longest vector. It is advisable to keep
+  vectors to the same length and to use single values for
+  parameters that are to be the same for all calculations.
+  If one of these parameters has a length greater than one,
+  the output will be also be a vector.
+}
+\examples{
+params <- c(1.20, 0.75, 0.66, 2.78)
+# Compute DERT for a customer who made 3 transactions
+# in the calibration period(consisting of 6 transaction
+# opportunities), with the last transaction occurring
+# during the 4th transaction opportunity, discounted at
+# 10\%.
+bgbb.DERT(params, x=3, t.x=4, n.cal=6, d=0.1)
+
+# We can also compare DERT for several customers:
+bgbb.DERT(params, x=1:6, t.x=6, n.cal=6, d=0.1)
+
+data(donationsSummary)
+
+rf.matrix <- donationsSummary$rf.matrix
+# donationsSummary$rf.matrix already has appropriate column names
+
+# starting-point parameters
+startingparams <- c(1, 1, 0.5, 3)
+# estimated parameters
+est.params <- bgbb.EstimateParameters(rf.matrix, startingparams)
+
+# compute DERT for a customer from every row in rf.matrix,
+# discounted at 10\%.
+bgbb.rf.matrix.DERT(est.params, rf.matrix, d=0.1)
+}
+\references{
+  Fader, Peter S., Bruce G.S. Hardie, and Jen Shang.
+  \dQuote{Customer-Base Analysis in a Discrete-Time
+  Noncontractual Setting.} \emph{Marketing Science} 29(6),
+  pp. 1086-1108. 2010. INFORMS.
+  \url{http://www.brucehardie.com/papers/020/}
+
+  See equation 14.
+}
+

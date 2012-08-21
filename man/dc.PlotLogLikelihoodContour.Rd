@@ -1,0 +1,123 @@
+\name{dc.PlotLogLikelihoodContour}
+\alias{dc.PlotLogLikelihoodContour}
+\title{Plot Log-Likelihood Contour}
+\usage{
+  dc.PlotLogLikelihoodContour(loglikelihood.fcn,
+    vary.or.fix.param, predicted.params, ..., n.divs = 3,
+    new.dev = FALSE, num.contour.lines = 10,
+    zoom.percent = 0.9, allow.neg.params = FALSE,
+    param.names = c("param 1", "param 2", "param 3", "param 4"))
+}
+\arguments{
+  \item{loglikelihood.fcn}{log-likelihood function to
+  plot.}
+
+  \item{vary.or.fix.param}{a vector of strings containing
+  either "vary" or "fix". The parameters in the same
+  indices as "vary" will be plotted while the other
+  parameters will remain fixed at the estimated values. See
+  details.}
+
+  \item{predicted.params}{estimated parameters.}
+
+  \item{...}{all additional arguments required by the
+  log-likelihood function. For example,
+  \code{\link{bgbb.rf.matrix.LL}} requires rf.matrix, and
+  \code{\link{pnbd.cbs.LL}} requires cal.cbs.}
+
+  \item{n.divs}{integer representing how fine-grained the
+  contour plot is. A higher value will produce a higher
+  resolution plot with smoother contour lines, but will
+  take longer to plot. n.divs also affects the boundaries
+  of the contour plot; see details.}
+
+  \item{new.dev}{if TRUE, makes a new window for each
+  contour plot.}
+
+  \item{num.contour.lines}{number of contour lines to plot
+  in the window.}
+
+  \item{zoom.percent}{determines boundaries of contour
+  plot. See details.}
+
+  \item{allow.neg.params}{if FALSE, the contour plot will
+  not include negative values (see details). This should be
+  set to false for the BG/BB and Pareto/NBD models.}
+
+  \item{param.names}{a vector containing parameter names.}
+}
+\description{
+  Makes a contour plot of a loglikelihood function that
+  varies over two designated parameters, centered around a
+  set of previously estimated parameters.
+}
+\details{
+  The contour plot will have the first parameter labelled
+  "vary" on the x-axis, and the second parameter labelled
+  "vary" on the y-axis. It will extend out by (n.divs *
+  zoom.percent) in both directions and both dimensions from
+  the estimated parameter values. The exception is if
+  allow.neg.params is FALSE. In this case, the contour plot
+  will end at zero if it would have extended into negative
+  parameter values.
+
+  The estimated parameter values will be indicated by the
+  intersection of two red lines.
+}
+\examples{
+# **Examples for BG/BB model:
+data(donationsSummary)
+rf.matrix <- donationsSummary$rf.matrix
+
+# starting-point parameters
+bgbb.startingparams <- c(1, 1, 0.5, 3)
+# estimated parameters
+bgbb.est.params <- bgbb.EstimateParameters(rf.matrix, bgbb.startingparams)
+
+# set up parameter names for a more descriptive result
+bgbb.param.names <- c("alpha", "beta", "gamma", "delta")
+
+# plot a log-likelihood contour of alpha and beta, the unobserved
+# parameters for the beta-Bernoulli transaction process of the BG/BB.
+# Note that allow.neg.params has been set to false as BG/BB parameters
+# cannot be negative.
+dc.PlotLogLikelihoodContour(bgbb.rf.matrix.LL, c("vary", "vary", "fix", "fix"),
+                            bgbb.est.params, rf.matrix = rf.matrix, n.divs = 15,
+                            num.contour.lines = 15, zoom.percent = 0.2,
+                            allow.neg.params = FALSE, param.names = bgbb.param.names)
+
+# plot a log-likelihood contour of gamma and delta, the unobserved
+# parameters for the beta-geometric dropout process of the BG/BB.
+# Note that allow.neg.params has been set to false as BG/BB parameters
+# cannot be negative.
+dc.PlotLogLikelihoodContour(bgbb.rf.matrix.LL, c("fix", "fix", "vary", "vary"),
+                            bgbb.est.params, rf.matrix = rf.matrix, n.divs = 15,
+                            num.contour.lines = 15, zoom.percent = 0.2,
+                            allow.neg.params = FALSE, param.names = bgbb.param.names)
+
+# **Example for Pareto/NBD model:
+data(cdnowSummary)
+cbs <- cdnowSummary$cbs
+
+# Speed up calculations:
+cbs <- pnbd.compress.cbs(cbs)
+
+# parameters estimated using pnbd.EstimateParameters
+pnbd.est.params <- cdnowSummary$est.params
+
+# set up parameter names for a more descriptive result
+pnbd.param.names <- c("r", "alpha", "s", "beta")
+
+# plot a log-likelihood contour of r and s, the shape parameters
+# of the transaction and dropout process models (respectively).
+# Note that allow.neg.params has been set to false as Pareto/NBD
+# parameters cannot be negative.
+dc.PlotLogLikelihoodContour(pnbd.cbs.LL, c("vary", "fix", "vary", "fix"),
+                            pnbd.est.params, cal.cbs = cbs, n.divs = 20,
+                            num.contour.lines = 20, zoom.percent = 0.1,
+                            allow.neg.params = FALSE, param.names = pnbd.param.names)
+}
+\seealso{
+  \code{\link{dc.PlotLogLikelihoodContours}}
+}
+

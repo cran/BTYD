@@ -1,0 +1,58 @@
+\name{dc.RemoveTimeBetween}
+\alias{dc.RemoveTimeBetween}
+\title{Remove Time Between}
+\usage{
+  dc.RemoveTimeBetween(elog, day1, day2, day3, day4)
+}
+\arguments{
+  \item{elog}{event log, which is a data frame with columns
+  for customer ID ("cust"), date ("date"), and optionally
+  other columns such as "sales". Each row represents an
+  event, such as a transaction. The "date" column must
+  consist of date objects, not character strings.}
+
+  \item{day1}{date of beginning of first period. Must be a
+  date object.}
+
+  \item{day2}{date of end of first period. Must be a date
+  object.}
+
+  \item{day3}{date of beginning of second period. Must be a
+  date object.}
+
+  \item{day4}{date of third period. Must be a date object.}
+}
+\value{
+  list \item{elog1}{the event log with all elog$date
+  entries between day1 and day2} \item{elog2}{the event
+  with all elog$date entries between day3 and day4}
+  \item{elog3}{elog1 combined with elog2, with all dates
+  from elog2 reduced by the time removed between elog1 and
+  elog2}
+}
+\description{
+  This function creates a new event log, with time in the
+  middle removed. Used, for example, in sports with
+  off-seasons.
+}
+\details{
+  The four date parameters must be in ascending order.
+}
+\examples{
+elog <- dc.ReadLines(system.file("data/cdnowElog.csv", package="BTYD"),2,3,5)
+elog[,"date"] <- as.Date(elog[,"date"], "\%Y\%m\%d")
+
+# Use the cdnow data to return a 6 month event log for January, February,
+# March, October, November, December.
+period.one.start <- as.Date("1997-01-01")
+period.one.end <- as.Date("1997-03-31")
+period.two.start <- as.Date("1997-10-01")
+period.two.end <- as.Date("1997-12-31")
+reduced.elog <- dc.RemoveTimeBetween(elog, period.one.start, period.one.end,
+                                     period.two.start, period.two.end)
+
+# Note that the new elog will go up to June 30 at a maximum, since we
+# are only using 6 months of data starting on January 1
+max(reduced.elog$elog3$date)  # "1997-06-30"
+}
+

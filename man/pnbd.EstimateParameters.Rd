@@ -1,0 +1,80 @@
+\name{pnbd.EstimateParameters}
+\alias{pnbd.EstimateParameters}
+\title{Pareto/NBD Parameter Estimation}
+\usage{
+  pnbd.EstimateParameters(cal.cbs,
+    par.start = c(1, 1, 1, 1), max.param.value = 10000)
+}
+\arguments{
+  \item{cal.cbs}{calibration period CBS (customer by
+  sufficient statistic). It must contain columns for
+  frequency ("x"), recency ("t.x"), and total time observed
+  ("T.cal"). Note that recency must be the time between the
+  start of the calibration period and the customer's last
+  transaction, not the time between the customer's last
+  transaction and the end of the calibration period. If
+  your data is compressed (see
+  \code{\link{pnbd.compress.cbs}}), a fourth column
+  labelled "custs" (number of customers with a specific
+  combination of recency, frequency and length of
+  calibration period) will make this function faster.}
+
+  \item{par.start}{initial Pareto/NBD parameters - a vector
+  with r, alpha, s, and beta, in that order. r and alpha
+  are unobserved parameters for the NBD transaction
+  process. s and beta are unobserved parameters for the
+  Pareto (exponential gamma) dropout process.}
+
+  \item{max.param.value}{the upper bound on parameters.}
+}
+\value{
+  Vector of estimated parameters.
+}
+\description{
+  Estimates parameters for the Pareto/NBD model.
+}
+\details{
+  The best-fitting parameters are determined using the
+  \code{\link{pnbd.cbs.LL}} function. The sum of the
+  log-likelihood for each customer (for a set of
+  parameters) is maximized in order to estimate parameters.
+
+  A set of starting parameters must be provided for this
+  method. If no parameters are provided, (1,1,1,1) is used
+  as a default. It may be useful to use starting values for
+  r and s that represent your best guess of the
+  heterogeneity in the buy and die rate of customers. It
+  may be necessary to run the estimation from multiple
+  starting points to ensure that it converges. To compare
+  the log-likelihoods of different parameters, use
+  \code{\link{pnbd.cbs.LL}}.
+
+  The lower bound on the parameters to be estimated is
+  always zero, since Pareto/NBD parameters cannot be
+  negative. The upper bound can be set with the
+  max.param.value parameter.
+
+  This function may take some time to run.
+}
+\examples{
+data(cdnowSummary)
+
+cal.cbs <- cdnowSummary$cbs
+# cal.cbs already has column names required by method
+
+# starting-point parameters
+startingparams <- c(0.5, 6, 0.9, 8)
+# estimated parameters
+est.params <- pnbd.EstimateParameters(cal.cbs, startingparams)
+
+# log-likelihood of estimated parameters
+pnbd.cbs.LL(est.params, cal.cbs)
+
+# compare the speed and results to the following:
+cal.cbs.compressed <- pnbd.compress.cbs(cal.cbs)
+est.params <- pnbd.EstimateParameters(cal.cbs.compressed, startingparams)
+}
+\seealso{
+  \code{\link{pnbd.cbs.LL}}
+}
+

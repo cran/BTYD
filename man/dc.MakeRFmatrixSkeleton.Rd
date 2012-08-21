@@ -1,0 +1,24 @@
+\name{dc.MakeRFmatrixSkeleton}
+\alias{dc.MakeRFmatrixSkeleton}
+\title{Make Recency-Frequency Matrix Skeleton}
+\usage{
+  dc.MakeRFmatrixSkeleton(n.periods)
+}
+\arguments{
+  \item{n.periods}{number of transaction opportunities in
+  the calibration period.}
+}
+\value{
+  Matrix with two columns: frequency ("x") and recency
+  ("t.x"). All possible recency-frequency combinations in
+  the calibration period are represented.
+}
+\description{
+  Creates a matrix with all possible recency and frequency
+  combinations.
+}
+\details{
+  Makes the structure in which to input data for
+  recency-frequency matrices.
+}
+

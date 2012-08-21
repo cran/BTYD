@@ -1,0 +1,26 @@
+Package: BTYD
+Type: Package
+Title: Implementing Buy 'Til You Die Models
+Version: 1.0
+Date: 2012-08-21
+Authors@R: c(person("Lukasz", "Dziurzynski", role="aut"),
+        person("Edward", "Wadsworth", role="aut"), person("Peter",
+        "Fader", role="ctb"), person("Elea", "McDonnell Feit",
+        role=c("cre","ctb"), email="efeit@wharton.upenn.edu"),
+        person("Bruce", "Hardie", role="ctb"), person("Arun",
+        "Gopalakrishnan", role="ctb"), person("Eric", "Schwartz",
+        role="ctb"), person("Yao", "Zhang", role="ctb"))
+URL: wcai.wharton.upenn.edu
+Description: This package contains functions for data preparation,
+        parameter estimation, scoring, and plotting for the BG/BB and
+        Pareto/NBD models.
+License: GPL-3
+Collate: 'bgbb.R' 'pnbd.R' 'dc.R' 'spend.R'
+Depends: gsl, Matrix
+Packaged: 2012-08-21 05:41:16 UTC; edward
+Author: Lukasz Dziurzynski [aut], Edward Wadsworth [aut], Peter Fader
+        [ctb], Elea McDonnell Feit [cre, ctb], Bruce Hardie [ctb], Arun
+        Gopalakrishnan [ctb], Eric Schwartz [ctb], Yao Zhang [ctb]
+Maintainer: Elea McDonnell Feit <efeit@wharton.upenn.edu>
+Repository: CRAN
+Date/Publication: 2012-08-22 12:00:40

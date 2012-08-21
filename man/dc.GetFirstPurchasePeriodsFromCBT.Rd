@@ -1,0 +1,28 @@
+\name{dc.GetFirstPurchasePeriodsFromCBT}
+\alias{dc.GetFirstPurchasePeriodsFromCBT}
+\title{Get First Purchase Periods from Customer-by-Time Matrix}
+\usage{
+  dc.GetFirstPurchasePeriodsFromCBT(cbt)
+}
+\arguments{
+  \item{cbt}{customer-by-time matrix. This is a matrix
+  consisting of a row per customer and a column per time
+  period. It should contain numeric information about a
+  customer's transactions in every time period - either the
+  number of transactions in that time period (frequency), a
+  1 to indicate that at least 1 transaction occurred
+  (reach), or the average/total amount spent in that time
+  period.}
+}
+\value{
+  a vector containing the indices of periods in which
+  customers made their first transactions. To convert to
+  actual dates (if your customer-by-time matrix has dates
+  as column names), use colnames(cbt)[RESULT]
+}
+\description{
+  Uses a customer-by-time matrix to return a vector
+  containing the periods in which customers made their
+  first purchase.
+}
+

@@ -1,0 +1,68 @@
+\name{pnbd.PlotFrequencyInCalibration}
+\alias{pnbd.PlotFrequencyInCalibration}
+\title{Pareto/NBD Plot Frequency in Calibration Period}
+\usage{
+  pnbd.PlotFrequencyInCalibration(params, cal.cbs, censor,
+    plotZero = TRUE,
+    xlab = "Calibration period transactions",
+    ylab = "Customers",
+    title = "Frequency of Repeat Transactions")
+}
+\arguments{
+  \item{params}{Pareto/NBD parameters - a vector with r,
+  alpha, s, and beta, in that order. r and alpha are
+  unobserved parameters for the NBD transaction process. s
+  and beta are unobserved parameters for the Pareto
+  (exponential gamma) dropout process.}
+
+  \item{cal.cbs}{calibration period CBS (customer by
+  sufficient statistic). It must contain columns for
+  frequency ("x") and total time observed ("T.cal").}
+
+  \item{censor}{integer used to censor the data. See
+  details.}
+
+  \item{plotZero}{If FALSE, the histogram will exclude the
+  zero bin.}
+
+  \item{xlab}{descriptive label for the x axis.}
+
+  \item{ylab}{descriptive label for the y axis.}
+
+  \item{title}{title placed on the top-center of the plot.}
+}
+\value{
+  Calibration period repeat transaction frequency
+  comparison matrix (actual vs. expected).
+}
+\description{
+  Plots a histogram and returns a matrix comparing the
+  actual and expected number of customers who made a
+  certain number of repeat transactions in the calibration
+  period, binned according to calibration period
+  frequencies.
+}
+\details{
+  This function requires a censor number, which cannot be
+  higher than the highest frequency in the calibration
+  period CBS. The output matrix will have (censor + 1)
+  bins, starting at frequencies of 0 transactions and
+  ending at a bin representing calibration period
+  frequencies at or greater than the censor number. The
+  plot may or may not include a bin for zero frequencies,
+  depending on the plotZero parameter.
+}
+\examples{
+data(cdnowSummary)
+
+cal.cbs <- cdnowSummary$cbs
+# cal.cbs already has column names required by method
+
+# parameters estimated using pnbd.EstimateParameters
+est.params <- cdnowSummary$est.params
+# the maximum censor number that can be used
+max(cal.cbs[,"x"])
+
+pnbd.PlotFrequencyInCalibration(est.params, cal.cbs, censor=7)
+}
+

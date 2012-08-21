@@ -1,0 +1,33 @@
+\name{bgbb.PlotDropoutRateHeterogeneity}
+\alias{bgbb.PlotDropoutRateHeterogeneity}
+\title{BG/BB Plot Dropout Rate Heterogeneity}
+\usage{
+  bgbb.PlotDropoutRateHeterogeneity(params)
+}
+\arguments{
+  \item{params}{BG/BB parameters - a vector with alpha,
+  beta, gamma, and delta, in that order. Alpha and beta are
+  unobserved parameters for the beta-Bernoulli transaction
+  process. Gamma and delta are unobserved parameters for
+  the beta-geometric dropout process.}
+}
+\value{
+  Distribution of customers' propensities to drop out.
+}
+\description{
+  Plots and returns the estimated beta distribution Theta
+  (customers' propensities to drop out).
+}
+\details{
+  This returns the distribution of each customer's
+  geometric parameter that determines their lifetime (using
+  the BG/BB assumption that a customer's lifetime can be
+  modeled with an geometric distribution).
+}
+\examples{
+params <- c(1.2, 0.75, 0.66, 2.78)
+bgbb.PlotDropoutRateHeterogeneity(params)
+params <- c(0.2, 1.5, 3.2, 6)
+bgbb.PlotDropoutRateHeterogeneity(params)
+}
+
