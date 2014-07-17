@@ -88,8 +88,8 @@ spend.LL <- function(params, m.x, x) {
 }
 
 
-spend.EstimateParameters <- function(m.x.vector, x.vector, par.start = c(1, 
-    1, 1), max.param.value = 10000) {
+spend.EstimateParameters <- function(m.x.vector, x.vector, par.start = c(1, 1, 1), 
+    max.param.value = 10000) {
     
     if (any(m.x.vector < 0) || !is.numeric(m.x.vector)) 
         stop("m.x must be numeric and may not contain negative numbers.")
@@ -144,9 +144,8 @@ spend.expected.value <- function(params, m.x, x) {
 }
 
 
-spend.plot.average.transaction.value <- function(params, m.x.vector, x.vector, 
-    xlab = "Average Transaction Value", ylab = "Marginal Distribution of Average Transaction Value", 
-    title = "Actual vs. Expected Average Transaction Value Across Customers") {
+spend.plot.average.transaction.value <- function(params, m.x.vector, x.vector, xlab = "Average Transaction Value", 
+    ylab = "Marginal Distribution of Average Transaction Value", title = "Actual vs. Expected Average Transaction Value Across Customers") {
     
     if (any(m.x.vector < 0) || !is.numeric(m.x.vector)) 
         stop("m.x must be numeric and may not contain negative numbers.")

@@ -8,22 +8,22 @@ Implementing Buy 'Til You Die Models
 \description{
   
 This package contains functions for data preparation, parameter estimation, scoring,
-and plotting for the BG/BB and Pareto/NBD models.
+and plotting for the BG/BB, BG/NBD and Pareto/NBD models.
 
 }
 \details{
   \tabular{ll}{
     Package: \tab BTYD\cr
     Type: \tab Package\cr
-    Version: \tab 1.0\cr
-    Date: \tab 2012-08-21\cr
+    Version: \tab 2.3\cr
+    Date: \tab 2014-07-17\cr
     License: \tab GPL-3\cr
     }
 
   This project was funded and sponsored by the Wharton Customer Analytics
   Initiative (wcai.wharton.upenn.edu).
 
-  This package implements the BG/BB and Pareto/NBD models, which
+  This package implements the BG/BB, BG/NBD and Pareto/NBD models, which
   capture/project customer purchase patterns in a typical
   non-contractual setting.
 
@@ -48,6 +48,8 @@ and plotting for the BG/BB and Pareto/NBD models.
   is populated by a statistic of your choice (reach, frequency, or
   spend). It is not necessary for any of the models presented in this
   package, but is used as a building block to produce the CBS.
+  
+  The BG/NBD model requires all the same inputs as the Pareto/NBD model.
 
   The BG/BB model requires the same information as the Pareto/NBD model,
   but as it models discrete transaction opportunities, this information
@@ -67,19 +69,24 @@ and plotting for the BG/BB and Pareto/NBD models.
   If you want to test the data contained in the package, or have data
   formatted as a customer-by-sufficient-statistic or recency-frequency
   matrix, a good starting place would be
-  \code{\link{pnbd.EstimateParameters}} or
+  \code{\link{pnbd.EstimateParameters}}, 
+  \code{\link{bgnbd.EstimateParameters}}, or
   \code{\link{bgbb.EstimateParameters}}.
 
-  Following that, \code{\link{pnbd.PlotFrequencyInCalibration}} and
+  Following that, \code{\link{pnbd.PlotFrequencyInCalibration}}, 
+  \code{\link{bgnbd.PlotFrequencyInCalibration}} and
   \code{\link{bgbb.PlotFrequencyInCalibration}} will give a check that
   the model fits the data in-sample. Further plotting functions,
   comparing actual and expected results, are labelled
-  \dQuote{pnbd.Plot...} and \dQuote{bgbb.Plot...}. The building blocks
-  of these functions are also provided: \code{\link{pnbd.LL}},
+  \dQuote{pnbd.Plot...}, \dQuote{bgnbd.Plot...} and \dQuote{bgbb.Plot...}. 
+  The building blocks of these functions are also provided: 
+  \code{\link{pnbd.LL}}, \code{\link{bgnbd.LL}}
   \code{\link{bgbb.LL}}, \code{\link{pnbd.pmf}},
-  \code{\link{bgbb.pmf}},
-  \code{\link{pnbd.Expectation}}, \code{\link{bgbb.Expectation}},
-  \code{\link{pnbd.ConditionalExpectedTransactions}}, and
+  \code{\link{bgnbd.pmf}}, \code{\link{bgbb.pmf}},
+  \code{\link{pnbd.Expectation}}, \code{\link{bgnbd.Expectation}}, 
+  \code{\link{bgbb.Expectation}}, 
+  \code{\link{pnbd.ConditionalExpectedTransactions}}, 
+  \code{\link{bgnbd.ConditionalExpectedTransactions}}, and
   \code{\link{bgbb.ConditionalExpectedTransactions}} may be of
   particular interest.
 
@@ -100,15 +107,15 @@ and plotting for the BG/BB and Pareto/NBD models.
   is used to refer to the number of transaction opportunities in the
   holdout period.
 
-  As described in the papers referenced below, the BG/BB and Pareto/NBD
-  models are generally concerned with repeat transactions, not total
-  transactions. This means that a customer's first transaction in the
-  calibration period is usually not part of the data being modeled -
-  this is due to the fact that a new customer generally does not show up
-  \dQuote{on the comapany's radar} until after their first purchase has
-  taken place. This means that the modal number of repeat purchases
-  tends to be zero. If your data does not have a relatively large number
-  of customers with zero transactions, but does have a relatively large
+  As described in the papers referenced below, the BG/BB, BG/NBD and 
+  Pareto/NBD   models are generally concerned with repeat transactions, 
+  not total transactions. This means that a customer's first transaction 
+  in the   calibration period is usually not part of the data being 
+  modelled - this is due to the fact that a new customer generally does 
+  not show up \dQuote{on the comapany's radar} until after their first 
+  purchase has taken place. This means that the modal number of repeat 
+  purchases tends to be zero. If your data does not have a relatively large 
+  number of customers with zero transactions, but does have a relatively large
   number of customers with one transaction, and the estimation functions
   are struggling, the problem is most likely that you are including
   customers' very first transactions. Some of the data-conversion
@@ -119,11 +126,11 @@ and plotting for the BG/BB and Pareto/NBD models.
 
 }
 \author{
-  Lukasz Dziurzynski, Edward Wadsworth
+  Lukasz Dziurzynski, Daniel McCarthy, Edward Wadsworth
 
-  Contributors: Peter Fader, Elea McDonnell Feit, Bruce Hardie, Arun Gopalakrishnan, Eric Schwartz, Yao Zhang
+  Contributors: Peter Fader, Elea McDonnell Feit, Bruce Hardie, Arun Gopalakrishnan, Eric Schwartz, Yao Zhang, Elea McDonnell Feit
 
-  Maintainer: Elea McDonnell Feit <efeit@wharton.upenn.edu>
+  Maintainer: Daniel McCarthy <danielmc@wharton.upenn.edu>
 }
 \references{
 
@@ -155,6 +162,13 @@ G.S. Hardie. \dQuote{Customer-Base Analysis on a 'Data Diet': Model
 Inference Using Repeated Cross-Sectional Summary (RCSS) Data.}
 June. 2011. Available at SSRN: \url{http://ssrn.com/abstract=1708562} or
 \url{http://dx.doi.org/10.2139/ssrn.1708562}
+
+Fader, Peter S., Bruce G.S. Hardie, and Ka L. Lee. \dQuote{``Counting Your Customers'' the Easy Way:
+An Alternative to the Pareto/NBD Model.} \emph{Marketing Science} Vol.24, pp.275-284. Spring. 2005. 
+\url{http://www.brucehardie.com/papers.html}
+
+Fader, Peter S., Hardie, Bruce G.S., and Lee, Ka Lok. \dQuote{Computing P(alive) Using
+the BG/NBD Model.} December. 2008. Web. \url{http://www.brucehardie.com/notes/021/palive_for_BGNBD.pdf}
 
 }
 

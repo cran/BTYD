@@ -1,14 +1,9 @@
-################################################################################
-################################################################################ Functions
-################################################################################ for
-################################################################################ Manipulating
-################################################################################ Data
+################################################################################ Functions for Manipulating Data
 
 library(Matrix)
 
-dc.ElogToCbsCbt <- function(elog, per = "week", T.cal = max(elog$date), 
-    T.tot = max(elog$date), merge.same.date = TRUE, cohort.birth.per = T.cal, dissipate.factor = 1, 
-    statistic = "freq") {
+dc.ElogToCbsCbt <- function(elog, per = "week", T.cal = max(elog$date), T.tot = max(elog$date), 
+    merge.same.date = TRUE, cohort.birth.per = T.cal, dissipate.factor = 1, statistic = "freq") {
     
     dc.WriteLine("Started making CBS and CBT from the ELOG...")
     
@@ -178,8 +173,7 @@ dc.BuildCBTFromElog <- function(elog, statistic = "freq") {
 
 dc.CreateFreqCBT <- function(elog) {
     # Factoring is so that when xtabs sorts customers, it does so in the original
-    # order It doesn't matter that they're factors; rownames are stored as
-    # characters
+    # order It doesn't matter that they're factors; rownames are stored as characters
     elog$cust <- factor(elog$cust, levels = unique(elog$cust))
     xt <- xtabs(~cust + date, data = elog)
     dc.WriteLine("...Completed Freq CBT")
@@ -188,8 +182,7 @@ dc.CreateFreqCBT <- function(elog) {
 
 dc.CreateReachCBT <- function(elog) {
     # Factoring is so that when xtabs sorts customers, it does so in the original
-    # order It doesn't matter that they're factors; rownames are stored as
-    # characters
+    # order It doesn't matter that they're factors; rownames are stored as characters
     elog$cust <- factor(elog$cust, levels = unique(elog$cust))
     xt <- xtabs(~cust + date, data = elog)
     xt[xt > 1] <- 1
@@ -199,8 +192,7 @@ dc.CreateReachCBT <- function(elog) {
 
 dc.CreateSpendCBT <- function(elog, is.avg.spend = FALSE) {
     # Factoring is so that when xtabs sorts customers, it does so in the original
-    # order It doesn't matter that they're factors; rownames are stored as
-    # characters
+    # order It doesn't matter that they're factors; rownames are stored as characters
     elog$cust <- factor(elog$cust, levels = unique(elog$cust))
     sales.xt <- xtabs(sales ~ cust + date, data = elog)
     if (is.avg.spend) {
@@ -215,8 +207,8 @@ dc.CreateSpendCBT <- function(elog, is.avg.spend = FALSE) {
 
 dc.MakeRFmatrixSkeleton <- function(n.periods) {
     ## note: to access the starting i'th t.x element use (i>0): i*(i-1)/2 + 2, ...
-    ## this yields the sequence: 2, 3, 5, 8, ... there are n*(n+1)/2 + 1 elements
-    ## in this table
+    ## this yields the sequence: 2, 3, 5, 8, ... there are n*(n+1)/2 + 1 elements in
+    ## this table
     n <- n.periods
     rf.mx.skeleton <- matrix(0, n * (n + 1)/2 + 1, 2)
     colnames(rf.mx.skeleton) <- c("x", "t.x")
@@ -316,8 +308,8 @@ dc.MergeCustomers <- function(data.correct, data.to.correct) {
     max.correct.iterations <- nrow(data.correct.ordered)
     max.to.correct.iterations <- nrow(data.to.correct)
     
-    ## Grab the lists of customers from the data frames and convert them to
-    ## optimize the loop speed
+    ## Grab the lists of customers from the data frames and convert them to optimize
+    ## the loop speed
     cust.list.correct <- rownames(data.correct.ordered)
     cust.list.to.correct <- rownames(data.to.correct)
     
@@ -373,8 +365,8 @@ dc.GetFirstPurchasePeriodsFromCBT <- function(cbt) {
     num.periods <- ncol(cbt)
     first.periods <- c(num.custs)
     
-    ## loops through the customers and periods and locates the first purchase
-    ## periods of each customer. Records them in first.periods
+    ## loops through the customers and periods and locates the first purchase periods
+    ## of each customer. Records them in first.periods
     for (ii in 1:num.custs) {
         curr.cust.transactions <- as.numeric(cbt[ii, ])
         transaction.index <- 1
@@ -401,8 +393,8 @@ dc.GetLastPurchasePeriodsFromCBT <- function(cbt) {
     num.periods <- ncol(cbt)
     last.periods <- c(num.custs)
     
-    ## loops through the customers and periods and locates the first purchase
-    ## periods of each customer. Records them in last.periods
+    ## loops through the customers and periods and locates the first purchase periods
+    ## of each customer. Records them in last.periods
     for (ii in 1:num.custs) {
         curr.cust.transactions <- as.numeric(cbt[ii, ])
         transaction.index <- num.periods
@@ -424,8 +416,8 @@ dc.GetLastPurchasePeriodsFromCBT <- function(cbt) {
 }
 
 
-dc.MakeRFmatrixCal <- function(frequencies, periods.of.final.purchases, 
-    num.of.purchase.periods, holdout.frequencies = NULL) {
+dc.MakeRFmatrixCal <- function(frequencies, periods.of.final.purchases, num.of.purchase.periods, 
+    holdout.frequencies = NULL) {
     
     if (!is.numeric(periods.of.final.purchases)) {
         stop("periods.of.final.purchases must be numeric")
@@ -457,8 +449,8 @@ dc.MakeRFmatrixCal <- function(frequencies, periods.of.final.purchases,
     ## sort the count data by both frequency and final purchase period
     rf.n.custs <- rf.n.custs[order(rf.n.custs[, 1], rf.n.custs[, 2]), ]
     
-    ## formula: (x-1) + 1 + tx*(tx-1)/2 + 1 keep count of duplicates once
-    ## different, use formula above to place count into the RF table.
+    ## formula: (x-1) + 1 + tx*(tx-1)/2 + 1 keep count of duplicates once different,
+    ## use formula above to place count into the RF table.
     current.pair <- c(rf.n.custs[1, 1], rf.n.custs[1, 2])
     
     same.item.in.a.row.counter <- 1
@@ -514,8 +506,8 @@ subLogs <- function(loga, logb) {
     return(logb + log(exp(loga - logb) - 1))
 }
 
-dc.PlotLogLikelihoodContours <- function(loglikelihood.fcn, predicted.params, 
-    ..., n.divs = 2, multiple.screens = FALSE, num.contour.lines = 10, zoom.percent = 0.9, 
+dc.PlotLogLikelihoodContours <- function(loglikelihood.fcn, predicted.params, ..., 
+    n.divs = 2, multiple.screens = FALSE, num.contour.lines = 10, zoom.percent = 0.9, 
     allow.neg.params = FALSE, param.names = c("param 1", "param 2", "param 3", "param 4")) {
     permutations <- combn(length(predicted.params), 2)
     num.permutations <- ncol(permutations)
@@ -543,8 +535,8 @@ dc.PlotLogLikelihoodContours <- function(loglikelihood.fcn, predicted.params,
     return(contour.plots)
 }
 
-dc.PlotLogLikelihoodContour <- function(loglikelihood.fcn, vary.or.fix.param, 
-    predicted.params, ..., n.divs = 3, new.dev = FALSE, num.contour.lines = 10, zoom.percent = 0.9, 
+dc.PlotLogLikelihoodContour <- function(loglikelihood.fcn, vary.or.fix.param, predicted.params, 
+    ..., n.divs = 3, new.dev = FALSE, num.contour.lines = 10, zoom.percent = 0.9, 
     allow.neg.params = FALSE, param.names = c("param 1", "param 2", "param 3", "param 4")) {
     if (new.dev) {
         dev.new()

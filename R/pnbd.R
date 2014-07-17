@@ -1,5 +1,4 @@
-################################################## Pareto/NBD estimation,
-################################################## visualization functions
+################################################## Pareto/NBD estimation, visualization functions
 
 library(gsl)
 
@@ -58,20 +57,22 @@ pnbd.LL <- function(params, x, t.x, T.cal) {
     part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
     part2 <- -(r + x) * log(alpha + T.cal) - s * log(beta + T.cal)
     if (absab == 0) {
-        F1 <- -(r + s + x) * log(maxab + t.x)
-        F2 <- -(r + s + x) * log(maxab + T.cal)
-        ## subLogs defined in dc.R. subLogs(a,b) = log(exp(a) - exp(b))
-        partF <- subLogs(F1, F2)
+        partF <- -(r + s + x) * log(maxab + t.x) + log(1 - ((maxab + t.x)/(maxab + 
+            T.cal))^(r + s + x))
     } else {
-        F1 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))/((maxab + 
-            t.x)^(r + s + x))
-        F2 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal))/((maxab + 
-            T.cal)^(r + s + x))
-        partF <- log(F1 - F2)
+        F1 = hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
+        F2 = hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * 
+            ((maxab + t.x)/(maxab + T.cal))^(r + s + x)
+        
+        partF = -(r + s + x) * log(maxab + t.x) + log(F1 - F2)
+        
+        
     }
     part3 <- log(s) - log(r + s + x) + partF
     return(part1 + log(exp(part2) + exp(part3)))
 }
+
+
 
 pnbd.compress.cbs <- function(cbs, rounding = 3) {
     
@@ -94,8 +95,8 @@ pnbd.compress.cbs <- function(cbs, rounding = 3) {
     ## Round x, t.x and T.cal to the desired level
     cbs[, c("x", "t.x", "T.cal")] <- round(cbs[, c("x", "t.x", "T.cal")], rounding)
     
-    ## Aggregate every column that is not x, t.x or T.cal by those columns. Do this
-    ## by summing entries which have the same x, t.x and T.cal.
+    ## Aggregate every column that is not x, t.x or T.cal by those columns. Do this by
+    ## summing entries which have the same x, t.x and T.cal.
     cbs <- as.matrix(aggregate(cbs[, !(colnames(cbs) %in% c("x", "t.x", "T.cal"))], 
         by = list(x = cbs[, "x"], t.x = cbs[, "t.x"], T.cal = cbs[, "T.cal"]), sum))
     
@@ -105,8 +106,7 @@ pnbd.compress.cbs <- function(cbs, rounding = 3) {
     return(cbs)
 }
 
-pnbd.EstimateParameters <- function(cal.cbs, par.start = c(1, 1, 1, 1), 
-    max.param.value = 10000) {
+pnbd.EstimateParameters <- function(cal.cbs, par.start = c(1, 1, 1, 1), max.param.value = 10000) {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), par.start, "pnbd.EstimateParameters")
     
@@ -208,10 +208,10 @@ pnbd.pmf.General <- function(params, t.start, t.end, x) {
     }
     
     equation.part.2.summation <- rep(NA, max.length)
-    ## In the paper, for i=0 we have t^i / i * B(r+s, i). the denominator reduces
-    ## to: i * Gamma (r+s) * Gamma(i) / Gamma (r+s+i) : Gamma (r+s) * Gamma(i+1) /
-    ## Gamma (r+s+i) : Gamma (r+s) * Gamma(1) / Gamma(r+s) : 1 The 1 represents
-    ## this reduced piece of the equation.
+    ## In the paper, for i=0 we have t^i / i * B(r+s, i). the denominator reduces to:
+    ## i * Gamma (r+s) * Gamma(i) / Gamma (r+s+i) : Gamma (r+s) * Gamma(i+1) / Gamma
+    ## (r+s+i) : Gamma (r+s) * Gamma(1) / Gamma(r+s) : 1 The 1 represents this reduced
+    ## piece of the equation.
     
     for (i in 1:max.length) {
         ii <- c(1:x[i])
@@ -227,8 +227,7 @@ pnbd.pmf.General <- function(params, t.start, t.end, x) {
 }
 
 
-pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, 
-    T.cal) {
+pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) {
     
     max.length <- max(length(T.star), length(x), length(t.x), length(T.cal))
     
@@ -402,8 +401,8 @@ pnbd.PlotFrequencyInCalibration <- function(params, cal.cbs, censor, plotZero = 
 }
 
 
-pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star, 
-    cal.cbs, x.star, censor, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
+pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star, cal.cbs, 
+    x.star, censor, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
     xticklab = NULL, title = "Conditional Expectation") {
     
     tryCatch(x <- cal.cbs[, "x"], error = function(e) stop("Error in pnbd.PlotFreqVsConditionalExpectedFrequency: cal.cbs must have a frequency column labelled \"x\""))
@@ -469,9 +468,9 @@ pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star,
     
 }
 
-pnbd.PlotRecVsConditionalExpectedFrequency <- function(params, cal.cbs, 
-    T.star, x.star, xlab = "Calibration period recency", ylab = "Holdout period transactions", 
-    xticklab = NULL, title = "Actual vs. Conditional Expected Transactions by Recency") {
+pnbd.PlotRecVsConditionalExpectedFrequency <- function(params, cal.cbs, T.star, x.star, 
+    xlab = "Calibration period recency", ylab = "Holdout period transactions", xticklab = NULL, 
+    title = "Actual vs. Conditional Expected Transactions by Recency") {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.PlotRecVsConditionalExpectedFrequency")
     
@@ -580,8 +579,7 @@ pnbd.PlotDropoutRateHeterogeneity <- function(params, lim = NULL) {
     return(rbind(x.axis.ticks, heterogeneity))
 }
 
-pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot, 
-    n.periods.final) {
+pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot, n.periods.final) {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.ExpectedCumulativeTransactions")
     
@@ -609,8 +607,8 @@ pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot,
 }
 
 
-pnbd.PlotTrackingCum <- function(params, T.cal, T.tot, actual.cu.tracking.data, 
-    xlab = "Week", ylab = "Cumulative Transactions", xticklab = NULL, title = "Tracking Cumulative Transactions") {
+pnbd.PlotTrackingCum <- function(params, T.cal, T.tot, actual.cu.tracking.data, xlab = "Week", 
+    ylab = "Cumulative Transactions", xticklab = NULL, title = "Tracking Cumulative Transactions") {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.Plot.PlotTrackingCum")
     

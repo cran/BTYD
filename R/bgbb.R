@@ -1,7 +1,4 @@
-################################################################################
-################################################################################ Beta-Geometric
-################################################################################ Beta-Binomial
-################################################################################ Functions
+################################################################################ Beta-Geometric Beta-Binomial Functions
 
 library(gsl)
 
@@ -59,9 +56,8 @@ bgbb.LL <- function(params, x, t.x, n.cal) {
         log(sum(exp(lbeta(alpha + x, beta + t.x - x + ii) - denom.ab + lbeta(gamma + 
             1, delta + t.x + ii) - denom.gd)))
     }
-    # for every element of the vectors for which t.x < n.cal, add the result of
-    # 'addition' in logspace.  addLogs defined in dc.R. addLogs(a,b) = log(exp(a) +
-    # exp(b))
+    # for every element of vectors for which t.x<n.cal, add the result of 'addition'
+    # in logspace.  addLogs defined in dc.R. addLogs(a,b) = log(exp(a) + exp(b))
     for (i in 1:max.length) {
         if (check[i] >= 0) 
             indiv.LL.sum[i] <- addLogs(indiv.LL.sum[i], addition(alpha, beta, gamma, 
@@ -71,8 +67,7 @@ bgbb.LL <- function(params, x, t.x, n.cal) {
 }
 
 
-bgbb.EstimateParameters <- function(rf.matrix, par.start = c(1, 1, 1, 
-    1), max.param.value = 1000) {
+bgbb.EstimateParameters <- function(rf.matrix, par.start = c(1, 1, 1, 1), max.param.value = 1000) {
     
     dc.check.model.params(c("alpha", "beta", "gamma", "delta"), par.start, "bgbb.EstimateParameters")
     
@@ -187,9 +182,8 @@ bgbb.Expectation <- function(params, n) {
     return(piece.one * (1 - piece.two))
 }
 
-bgbb.PlotFrequencyInCalibration <- function(params, rf.matrix, censor = NULL, 
-    plotZero = TRUE, xlab = "Calibration period transactions", ylab = "Customers", 
-    title = "Frequency of Repeat Transactions") {
+bgbb.PlotFrequencyInCalibration <- function(params, rf.matrix, censor = NULL, plotZero = TRUE, 
+    xlab = "Calibration period transactions", ylab = "Customers", title = "Frequency of Repeat Transactions") {
     
     dc.check.model.params(c("alpha", "beta", "gamma", "delta"), params, "bgbb.PlotFrequencyInCalibration")
     
@@ -343,8 +337,7 @@ bgbb.PlotTrackingInc <- function(params, rf.matrix, actual.inc.repeat.transactio
 }
 
 
-bgbb.ConditionalExpectedTransactions <- function(params, n.cal, n.star, 
-    x, t.x) {
+bgbb.ConditionalExpectedTransactions <- function(params, n.cal, n.star, x, t.x) {
     
     max.length <- max(length(x), length(t.x), length(n.cal), length(n.star))
     
@@ -402,8 +395,8 @@ bgbb.ConditionalExpectedTransactions <- function(params, n.cal, n.star,
     return(expected.frequency)
 }
 
-bgbb.PlotFreqVsConditionalExpectedFrequency <- function(params, n.star, 
-    rf.matrix, x.star, trunc = NULL, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
+bgbb.PlotFreqVsConditionalExpectedFrequency <- function(params, n.star, rf.matrix, 
+    x.star, trunc = NULL, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
     xticklab = NULL, title = "Conditional Expectation") {
     
     if (length(x.star) != nrow(rf.matrix)) 
@@ -479,8 +472,8 @@ bgbb.PlotFreqVsConditionalExpectedFrequency <- function(params, n.star,
 }
 
 
-bgbb.PlotRecVsConditionalExpectedFrequency <- function(params, n.star, 
-    rf.matrix, x.star, trunc = NULL, xlab = "Calibration period recency", ylab = "Holdout period transactions", 
+bgbb.PlotRecVsConditionalExpectedFrequency <- function(params, n.star, rf.matrix, 
+    x.star, trunc = NULL, xlab = "Calibration period recency", ylab = "Holdout period transactions", 
     xticklab = NULL, title = "Conditional Expected Transactions by Recency") {
     
     if (length(x.star) != nrow(rf.matrix)) 
@@ -801,8 +794,8 @@ bgbb.HeatmapHoldoutExpectedTrans <- function(params, n.cal, n.star, xlab = "Rece
     return(heatmap.mx)
 }
 
-bgbb.PlotFrequencyInHoldout <- function(params, n.cal, rf.matrix.holdout, 
-    censor = NULL, plotZero = TRUE, title = "Frequency of Repeat Transactions", xlab = "Holdout period transactions", 
+bgbb.PlotFrequencyInHoldout <- function(params, n.cal, rf.matrix.holdout, censor = NULL, 
+    plotZero = TRUE, title = "Frequency of Repeat Transactions", xlab = "Holdout period transactions", 
     ylab = "Customers") {
     
     dc.check.model.params(c("alpha", "beta", "gamma", "delta"), params, "bgbb.PlotFrequencyInHoldout")
