@@ -1,0 +1,28 @@
+
+
+
+
+Changes from Version 1.0 to 2.4 [06-Nov-2014]
+
+* Added new functions bgnbd.compress.cbs, 
+  bgnbd.ConditionalExpectedTransactions, bgnbd.EstimateParameters, 
+  bgnbd.Expectation, bgnbd.ExpectedCumulativeTransactions, bgnbd.LL, 
+  bgnbd.PAlive, bgnbd.PlotDropoutRateHeterogeneity, 
+  bgnbd.PlotFrequencyInCalibration, 
+  bgnbd.PlotFreqVsConditionalExpectedFrequency, 
+  bgnbd.PlotRecVsConditionalExpectedFrequency, bgnbd.PlotTrackingCum, 
+  bgnbd.PlotTrackingInc, bgnbd.PlotTransactionRateHeterogeneity, 
+  bgnbd.pmf, bgnbd.pmf.General
+  
+* Changed code of function pnbd.LL to improve numerical stability when
+  transaction count and/or current time are large.
+
+* Changed vignette to add new BG/NBD model walkthrough.
+
+* Change maintainer info.
+
+* Switch from gsl package to hypergeo package to compute 
+	hypergeometric functions, enabling compatibility with Mavericks platform.
+
+
+

@@ -1,7 +1,7 @@
 ## Methods to model and forecast the amount that members are spending during
 ## transactions.
 
-library(gsl)
+library(hypergeo)
 library(lattice)
 
 spend.marginal.likelihood <- function(params, m.x, x) {

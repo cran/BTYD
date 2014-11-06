@@ -15,8 +15,8 @@ and plotting for the BG/BB, BG/NBD and Pareto/NBD models.
   \tabular{ll}{
     Package: \tab BTYD\cr
     Type: \tab Package\cr
-    Version: \tab 2.3\cr
-    Date: \tab 2014-07-17\cr
+    Version: \tab 2.4\cr
+    Date: \tab 2014-11-06\cr
     License: \tab GPL-3\cr
     }
 

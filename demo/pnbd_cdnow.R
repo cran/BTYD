@@ -1,4 +1,4 @@
-## Authors: Lukasz Dziurzynski, Edward Wadsworth
+## Authors: Lukasz Dziurzynski, Daniel McCarthy, Edward Wadsworth
 
 data(cdnowSummary)
 
@@ -26,17 +26,3 @@ pnbd.PlotFreqVsConditionalExpectedFrequency(params, T.star, cbs, x.star, censor=
 ## Plot the comparison of actual and conditional expected holdout period frequencies,
 ## binned according to calibration period recencies:
 pnbd.PlotRecVsConditionalExpectedFrequency(params, cbs, T.star, x.star)
-
-cum.trans <- cdnowSummary$cu.tracking                           # cumulative weekly transactions
-inc.trans <- pnbd.CumulativeToIncremental(cum.trans)     # incremental weekly transactions
-T.cal <- max(cbs[,"T.cal"])                                     # length of calibration period
-T.tot <- 78                                                     # end of holdout period
-time.periods <- 78                                              # total number of time periods
-
-## Plot the comparison of actual and expected total cumulative transactions across
-## both the calibration and holdout periods:
-pnbd.PlotTrackingCum(params, cbs, T.cal, T.tot, cum.trans, time.periods)
-
-## Plot the comparison of actual and expected total incremental transactions across
-## both the calibration and holdout periods:
-pnbd.PlotTrackingInc(params, cbs, T.cal, T.tot, inc.trans, time.periods)

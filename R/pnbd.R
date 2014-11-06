@@ -1,6 +1,6 @@
 ################################################## Pareto/NBD estimation, visualization functions
 
-library(gsl)
+library(hypergeo)
 
 pnbd.cbs.LL <- function(params, cal.cbs) {
     
@@ -19,6 +19,24 @@ pnbd.cbs.LL <- function(params, cal.cbs) {
 }
 
 pnbd.LL <- function(params, x, t.x, T.cal) {
+    
+    h2f1 <- function(a, b, c, z) {
+        lenz <- length(z)
+        j = 0
+        uj <- 1:lenz
+        uj <- uj/uj
+        y <- uj
+        lteps <- 0
+        
+        while (lteps < lenz) {
+            lasty <- y
+            j <- j + 1
+            uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+            y <- y + uj
+            lteps <- sum(y == lasty)
+        }
+        return(y)
+    }
     
     max.length <- max(length(x), length(t.x), length(T.cal))
     
@@ -60,9 +78,9 @@ pnbd.LL <- function(params, x, t.x, T.cal) {
         partF <- -(r + s + x) * log(maxab + t.x) + log(1 - ((maxab + t.x)/(maxab + 
             T.cal))^(r + s + x))
     } else {
-        F1 = hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
-        F2 = hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * 
-            ((maxab + t.x)/(maxab + T.cal))^(r + s + x)
+        F1 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
+        F2 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * ((maxab + 
+            t.x)/(maxab + T.cal))^(r + s + x)
         
         partF = -(r + s + x) * log(maxab + t.x) + log(F1 - F2)
         
@@ -192,20 +210,23 @@ pnbd.pmf.General <- function(params, t.start, t.end, x) {
         s)
     
     B.1 <- rep(NA, max.length)
-    B.1[alpha > beta + t.start] <- hyperg_2F1(r + s, s + 1, r + s + x + 1, (alpha - 
-        beta - t.start)/alpha)/(alpha^(r + s))
-    B.1[alpha <= beta + t.start] <- hyperg_2F1(r + s, r + x, r + s + x + 1, (beta + 
-        t.start - alpha)/(beta + t.start))/((beta + t.start)^(r + s))
+    
+    B.1[alpha > beta + t.start] <- Re(hypergeo(r + s, s + 1, r + s + x + 1, (alpha - 
+        beta - t.start)/alpha))/(alpha^(r + s))
+    B.1[alpha <= beta + t.start] <- Re(hypergeo(r + s, r + x, r + s + x + 1, (beta + 
+        t.start - alpha)/(beta + t.start)))/((beta + t.start)^(r + s))
+    
     
     B.2 <- function(r, alpha, s, beta, t.start, t.end, x, ii) {
         if (alpha > (beta + t.start)) {
-            hyperg_2F1(r + s + ii, s + 1, r + s + x + 1, (alpha - beta - t.start)/(alpha + 
-                t.end - t.start))/((alpha + t.end - t.start)^(r + s + ii))
+            Re(hypergeo(r + s + ii, s + 1, r + s + x + 1, (alpha - beta - t.start)/(alpha + 
+                t.end - t.start)))/((alpha + t.end - t.start)^(r + s + ii))
         } else {
-            hyperg_2F1(r + s + ii, r + x, r + s + x + 1, (beta + t.start - alpha)/(beta + 
-                t.end))/((beta + t.end)^(r + s + ii))
+            Re(hypergeo(r + s + ii, r + x, r + s + x + 1, (beta + t.start - alpha)/(beta + 
+                t.end)))/((beta + t.end)^(r + s + ii))
         }
     }
+    
     
     equation.part.2.summation <- rep(NA, max.length)
     ## In the paper, for i=0 we have t^i / i * B(r+s, i). the denominator reduces to:
@@ -270,6 +291,24 @@ pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) 
 
 pnbd.PAlive <- function(params, x, t.x, T.cal) {
     
+    h2f1 <- function(a, b, c, z) {
+        lenz <- length(z)
+        j = 0
+        uj <- 1:lenz
+        uj <- uj/uj
+        y <- uj
+        lteps <- 0
+        
+        while (lteps < lenz) {
+            lasty <- y
+            j <- j + 1
+            uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+            y <- y + uj
+            lteps <- sum(y == lasty)
+        }
+        return(y)
+    }
+    
     max.length <- max(length(x), length(t.x), length(T.cal))
     
     if (max.length%%length(x)) 
@@ -300,18 +339,18 @@ pnbd.PAlive <- function(params, x, t.x, T.cal) {
     
     A0 <- 0
     if (alpha >= beta) {
-        F1 <- hyperg_2F1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + 
-            t.x))
-        F2 <- hyperg_2F1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + 
-            T.cal))
+        F1 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + t.x))
+        F2 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + T.cal))
         A0 <- F1/((alpha + t.x)^(r + s + x)) - F2/((alpha + T.cal)^(r + s + x))
     } else {
-        F1 <- hyperg_2F1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + 
-            t.x))
-        F2 <- hyperg_2F1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + 
-            T.cal))
+        F1 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + t.x))
+        F2 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + T.cal))
         A0 <- F1/((beta + t.x)^(r + s + x)) - F2/((beta + T.cal)^(r + s + x))
     }
+    
+    
+    
+    
     return((1 + s/(r + s + x) * (alpha + T.cal)^(r + x) * (beta + T.cal)^s * A0)^(-1))
 }
 
@@ -723,9 +762,9 @@ pnbd.DERT <- function(params, x, t.x, T.cal, d) {
         F1 <- 1/((maxab + t.x)^(r + s + x))
         F2 <- 1/((maxab + T.cal)^(r + s + x))
     } else {
-        F1 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))/((maxab + 
+        F1 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x)))/((maxab + 
             t.x)^(r + s + x))
-        F2 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal))/((maxab + 
+        F2 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)))/((maxab + 
             T.cal)^(r + s + x))
     }
     
@@ -733,8 +772,10 @@ pnbd.DERT <- function(params, x, t.x, T.cal, d) {
     
     z <- d * (beta + T.cal)
     
-    tricomi.part.1 = ((z)^(1 - s))/(s - 1) * hyperg_1F1(1, 2 - s, z)
-    tricomi.part.2 = gamma(1 - s) * hyperg_1F1(s, s, z)
+    tricomi.part.1 = ((z)^(1 - s))/(s - 1) * genhypergeo(U = c(1), L = c(2 - s), 
+        check_mod = FALSE, z)
+    tricomi.part.2 = gamma(1 - s) * genhypergeo(U = c(s), L = c(s), check_mod = FALSE, 
+        z)
     tricomi = tricomi.part.1 + tricomi.part.2
     
     result <- exp(r * log(alpha) + s * log(beta) + (s - 1) * log(d) + lgamma(r + 

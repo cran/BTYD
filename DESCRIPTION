@@ -1,8 +1,8 @@
 Package: BTYD
 Type: Package
 Title: Implementing Buy 'Til You Die Models
-Version: 2.3
-Date: 2014-07-17
+Version: 2.4
+Date: 2014-11-06
 Authors@R: c(person("Lukasz", "Dziurzynski", role="aut"),
              person("Edward", "Wadsworth", role="aut"),
 			 person("Peter", "Fader", role="ctb"),
@@ -18,11 +18,11 @@ URL: wcai.wharton.upenn.edu
 Description: This package contains functions for data preparation, parameter estimation, scoring, and plotting for the BG/BB, BG/NBD and Pareto/NBD models.
 License: GPL-3
 Collate: 'bgbb.R' 'bgnbd.R' 'pnbd.R' 'dc.R' 'spend.R'
-Depends: gsl
+Depends: hypergeo
 Imports: Matrix
 Suggests: knitr
 VignetteBuilder: knitr
-Packaged: 2014-07-21 17:30:20 UTC; danielmc
+Packaged: 2014-11-07 03:11:39 UTC; danielmc
 Author: Lukasz Dziurzynski [aut],
   Edward Wadsworth [aut],
   Peter Fader [ctb],
@@ -34,4 +34,4 @@ Author: Lukasz Dziurzynski [aut],
   Yao Zhang [ctb]
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2014-07-21 20:17:41
+Date/Publication: 2014-11-07 09:59:40

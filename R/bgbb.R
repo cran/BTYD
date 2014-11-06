@@ -1,6 +1,6 @@
 ################################################################################ Beta-Geometric Beta-Binomial Functions
 
-library(gsl)
+library(hypergeo)
 
 bgbb.rf.matrix.LL <- function(params, rf.matrix) {
     
@@ -703,8 +703,8 @@ bgbb.DERT <- function(params, x, t.x, n.cal, d) {
     
     piece.1 <- exp(lbeta(alpha + x + 1, beta + n.cal - x) - lbeta(alpha, beta))
     piece.2 <- exp(lbeta(gamma, delta + n.cal + 1) - lbeta(gamma, delta))/(1 + d)
-    piece.3 <- hyperg_2F1(1, delta + n.cal + 1, gamma + delta + n.cal + 1, 1/(1 + 
-        d))
+    piece.3 <- Re(hypergeo(1, delta + n.cal + 1, gamma + delta + n.cal + 1, 1/(1 + 
+        d)))
     piece.4 <- exp(bgbb.LL(params, x, t.x, n.cal))
     
     dert <- piece.1 * piece.2 * (piece.3/piece.4)

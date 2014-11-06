@@ -9,7 +9,7 @@
 % setlength{\parskip}{1ex plus 0.2ex minus 0.2ex}
 \author{Daniel McCarthy, Edward Wadsworth}
 \title{Buy 'Til You Die - A Walkthrough}
-\date{July, 2014}
+\date{November, 2014}
 \pagestyle{plain} %consider 'headings'
 \begin{document}
 \maketitle %generate the title

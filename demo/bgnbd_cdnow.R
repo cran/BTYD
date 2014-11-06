@@ -1,14 +1,15 @@
-## Authors: Lukasz Dziurzynski, Edward Wadsworth
+## Authors: Daniel McCarthy, Lukasz Dziurzynski, Edward Wadsworth
 
 data(cdnowSummary)
 
 ## Get the calibration period customer-by-sufficient-statistic matrix from the cdnow data:
 cbs <- cdnowSummary$cbs
 
-## Estimate parameters for the Pareto/NBD model from the CBS:
-par.start <- c(0.5, 1, 0.5, 1)
+## Estimate parameters for the BG/NBD model from the CBS:
+par.start <- c(1,3,1,3)
 params <- bgnbd.EstimateParameters(cbs, par.start)
 params
+
 
 ## Check log-likelihood of the params:
 bgnbd.cbs.LL(params, cbs)
@@ -27,16 +28,3 @@ bgnbd.PlotFreqVsConditionalExpectedFrequency(params, T.star, cbs, x.star, censor
 ## binned according to calibration period recencies:
 bgnbd.PlotRecVsConditionalExpectedFrequency(params, cbs, T.star, x.star)
 
-cum.trans <- cdnowSummary$cu.tracking                           # cumulative weekly transactions
-inc.trans <- bgnbd.CumulativeToIncremental(cum.trans)     # incremental weekly transactions
-T.cal <- max(cbs[,"T.cal"])                                     # length of calibration period
-T.tot <- 78                                                     # end of holdout period
-time.periods <- 78                                              # total number of time periods
-
-## Plot the comparison of actual and expected total cumulative transactions across
-## both the calibration and holdout periods:
-bgnbd.PlotTrackingCum(params, cbs, T.cal, T.tot, cum.trans, time.periods)
-
-## Plot the comparison of actual and expected total incremental transactions across
-## both the calibration and holdout periods:
-bgnbd.PlotTrackingInc(params, cbs, T.cal, T.tot, inc.trans, time.periods)

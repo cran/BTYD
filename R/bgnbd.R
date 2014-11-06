@@ -1,6 +1,6 @@
 ################################################## BG/NBD estimation, visualization functions
 
-library(gsl)
+library(hypergeo)
 
 bgnbd.cbs.LL <- function(params, cal.cbs) {
     
@@ -212,7 +212,6 @@ bgnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal)
         }
         return(y)
     }
-    
     
     max.length <- max(length(T.star), length(x), length(t.x), length(T.cal))
     
