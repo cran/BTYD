@@ -72,22 +72,33 @@ pnbd.LL <- function(params, x, t.x, T.cal) {
     if (alpha < beta) {
         param2 <- r + x
     }
+    
+    # stuff below is equivalent to fix proposed at
+    # https://github.com/theofilos/BTYD
     part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
-    part2 <- -(r + x) * log(alpha + T.cal) - s * log(beta + T.cal)
-    if (absab == 0) {
-        partF <- -(r + s + x) * log(maxab + t.x) + log(1 - ((maxab + t.x)/(maxab + 
-            T.cal))^(r + s + x))
-    } else {
-        F1 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
-        F2 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * ((maxab + 
-            t.x)/(maxab + T.cal))^(r + s + x)
-        
-        partF = -(r + s + x) * log(maxab + t.x) + log(F1 - F2)
-        
-        
+    
+    a <- alpha+T.cal
+    b <- maxab+t.x
+    c <- beta+T.cal
+    d <- maxab+T.cal
+    w <- r + s + x
+    
+    part2 <- (s-w) * log(a) - s * log(c) 
+    
+    stump <- ( c/b )^s
+    half1 <- ( b/a )^(s-w) 
+    half2 <- ( d/a )^(s-w) 
+    
+    if (absab == 0) {    
+      part2_times_F1_min_F2 <- stump * (half1 - half2)
     }
-    part3 <- log(s) - log(r + s + x) + partF
-    return(part1 + log(exp(part2) + exp(part3)))
+    else {
+      F1 = h2f1(w, param2, w+1, absab / b)
+      F2 = h2f1(w, param2, w+1, absab / d)
+      
+      part2_times_F1_min_F2 = stump * (F1 * half1 - F2 * half2)
+    }
+    return(part1 + part2 + log(1+(s/w)*part2_times_F1_min_F2) )
 }
 
 

@@ -425,7 +425,7 @@ divides the customers up into bins according to calibration period
 frequencies and plots actual and conditional expected holdout period
 frequencies for these bins.
 
-<<fig.path="figure/", label="pnbdCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig=FALSE>>=
+<<fig.path="figure/", label="pnbdCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig.keep='none'>>=
 T.star <- 39 # length of the holdout period
 censor <- 7  # This censor serves the same purpose described above
 x.star <- cal.cbs[,"x.star"]
@@ -491,7 +491,7 @@ the total period (\texttt{T.tot} and \texttt{n.periods.final}) is that
 your customer-by-sufficient-statistic matrix and your tracking data
 may be in different time periods.
 
-<<fig.path="figure/", label="pnbdTrackingInc", tidy=FALSE, echo=TRUE, fig=FALSE>>=
+<<fig.path="figure/", label="pnbdTrackingInc", tidy=FALSE, echo=TRUE, fig.keep='none'>>=
 T.cal <- cal.cbs[,"T.cal"]
 T.tot <- 78
 n.periods.final <- 78
@@ -518,7 +518,7 @@ time, as shown in figure \ref{fig:pnbdTrackingCum}.
 
 
 
-<<fig.path="figure/", label="pnbdTrackingCum", tidy=FALSE, echo=TRUE, fig=FALSE>>=
+<<fig.path="figure/", label="pnbdTrackingCum", tidy=FALSE, echo=TRUE, fig.keep='none'>>=
 cum.tracking.data <- cumsum(w.track.data)
 cum.tracking <- pnbd.PlotTrackingCum(params, T.cal, 
                                      T.tot, cum.tracking.data,
@@ -943,7 +943,7 @@ divides the customers up into bins according to calibration period
 frequencies and plots actual and conditional expected holdout period
 frequencies for these bins.
 
-<<fig.path="figure/", label="bgnbdCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig=FALSE>>=
+<<fig.path="figure/", label="bgnbdCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig.keep='none'>>=
 T.star <- 39 # length of the holdout period
 censor <- 7  # This censor serves the same purpose described above
 x.star <- cal.cbs[,"x.star"]
@@ -1268,7 +1268,7 @@ according to calibration period frequencies.
  
 \clearpage
 
-<<fig.path="figure/", label="bgbbCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig=FALSE>>=
+<<fig.path="figure/", label="bgbbCondExpComp", tidy=FALSE, echo=TRUE, size="small", fig.keep='none'>>=
 n.star <- 5 # length of the holdout period
 x.star <- donationsSummary$x.star
 comp <- bgbb.PlotFreqVsConditionalExpectedFrequency(params, n.star, 
@@ -1288,7 +1288,7 @@ Since the BG/BB model uses discrete data, we can also bin customers by
 recency. Figure \ref{fig:bgbbCondExpCompRec} shows the fit of holdout
 period frequencies, with customers binned in this manner.
 
-<<fig.path="figure/", label="bgbbCondExpCompRec", tidy=FALSE, echo=TRUE, size="small", fig=FALSE>>=
+<<fig.path="figure/", label="bgbbCondExpCompRec", tidy=FALSE, echo=TRUE, size="small", fig.keep='none'>>=
 comp <- bgbb.PlotRecVsConditionalExpectedFrequency(params, n.star, 
                                                    rf.matrix, x.star)
 rownames(comp) <- c("act", "exp", "bin")
@@ -1310,7 +1310,7 @@ log; however, the process will be exactly the same as described in
 section \ref{subsec:pnbdPlotting}. The annual transaction data is
 provided by the package. 
 
-<<fig.path="figure/", label="bgbbTrackingInc", tidy=FALSE, echo=TRUE, fig=FALSE>>=
+<<fig.path="figure/", label="bgbbTrackingInc", tidy=FALSE, echo=TRUE, fig.keep='none'>>=
 inc.track.data <- donationsSummary$annual.trans
 n.cal <- 6
 xtickmarks <- 1996:2006
@@ -1332,7 +1332,7 @@ Figure \ref{fig:bgbbTrackingInc} shows remarkable fit, but we can
 smooth it out for a cleaner graph by making it cumulative (as shown in
 figure \ref{fig:bgbbTrackingCum}).
 
-<<fig.path="figure/", label="bgbbTrackingCum", tidy=FALSE, echo=TRUE, size="small", fig=FALSE>>=
+<<fig.path="figure/", label="bgbbTrackingCum", tidy=FALSE, echo=TRUE, size="small", fig.keep='none'>>=
 cum.track.data <- cumsum(inc.track.data)
 cum.tracking <- bgbb.PlotTrackingCum(params, rf.matrix, cum.track.data, 
                                      xticklab = xtickmarks)
