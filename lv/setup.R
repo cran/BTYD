@@ -1,6 +1,18 @@
 # Import the data and create the customer-by-time-matrix
 # Get ready to model
 
+##Install packages
+
+toInstallCandidates <- c("ggplot2", "BTYD", "reshape2", "plyr", "lubridate")
+
+# check if pkgs are already present
+
+toInstall <- toInstallCandidates[!toInstallCandidates%in%library()$results[,1]] 
+if(length(toInstall)!=0)
+{install.packages(toInstall, repos = "http://cran.r-project.org")}
+
+# load pkgs
+lapply(toInstallCandidates, library, character.only = TRUE)
 library(BTYD)
 elogFile <- "TxData.csv"
 elog <- dc.ReadLines(elogFile, cust.idx = 1,

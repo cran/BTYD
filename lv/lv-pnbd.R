@@ -39,6 +39,15 @@ T.cal <- cal.cbs[custName,"T.cal"]
 pnbd.ConditionalExpectedTransactions(params, T.star = 52, x, t.x, T.cal)
 pnbd.PAlive(params, x, t.x, T.cal)
 
+# To visualize the distribution of P(Alive) across customers:
+p.alives <- pnbd.PAlive(params, cal.cbs[,"x"], cal.cbs[,"t.x"], cal.cbs[,"T.cal"])
+
+ggplot(as.data.frame(p.alives),aes(x=p.alives))+
+  geom_histogram(colour="grey",fill="orange")+
+  ylab("Number of Customers")+
+  xlab("Probability Customer is 'Live'")+
+  theme_minimal()
+
 # Goodness of Fit
 censor <- 10
 pnbd.PlotFrequencyInCalibration(params, cal.cbs, censor)
