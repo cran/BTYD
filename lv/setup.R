@@ -51,4 +51,8 @@ simData <- dc.ElogToCbsCbt(elog, per="week", T.cal)
 cal.cbs <- simData$cal$cbs
 cal.cbt <- simData$cal$cbt
 
+# for Holdout period
+hold.cbs <- simData$holdout$cbs
+head(hold.cbs)
+hold.cbt <- simData$holdout$cbt
 
