@@ -49,7 +49,7 @@ ggplot(as.data.frame(p.alives),aes(x=p.alives))+
   theme_minimal()
 
 # Goodness of Fit
-censor <- 10
+censor <- 7
 pnbd.PlotFrequencyInCalibration(params, cal.cbs, censor)
 
 # Verify in Holdout Period

@@ -2,8 +2,7 @@
 # Get ready to model
 
 ##Install packages
-
-toInstallCandidates <- c("ggplot2", "BTYD", "reshape2", "plyr", "lubridate")
+toInstallCandidates <- c("ggplot2", "reshape2", "plyr", "lubridate", "devtools")
 
 # check if pkgs are already present
 
@@ -13,7 +12,22 @@ if(length(toInstall)!=0)
 
 # load pkgs
 lapply(toInstallCandidates, library, character.only = TRUE)
+
+
+# Cleanup existing installation of BTYD
+if ("package:BTYD" %in% search()) { detach("package:BTYD", unload=TRUE) }
+if ("BTYD" %in% rownames(installed.packages())) { remove.packages("BTYD") }
+
+#Change local to 1 if using the local version of BTYD instead of CRAN version
+local <-0
+
+if (local){
+  devtools::install_github("jamespaul007/BTYD")
+} else{
+  install.packages("BTYD")
+}
 library(BTYD)
+
 elogFile <- "TxData.csv"
 elog <- dc.ReadLines(elogFile, cust.idx = 1,
                      date.idx = 2, sales.idx = 3)
