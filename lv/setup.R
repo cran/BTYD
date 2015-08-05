@@ -43,13 +43,12 @@ summary(elog)
 
 max(elog$date);
 min(elog$date);
-plot(elog$date, elog$sales)
+qplot(date, sales, data = elog)
 xtabs( sales ~ cust, data =elog)
 
 # Approach #1
 # Merge transactions on the same day
 elog <- dc.MergeTransactionsOnSameDate(elog)
-plot(elog$date, elog$sales)
 
 # Split into calibration and holdout period
 end.of.cal.period <- as.Date("2013-12-31")
