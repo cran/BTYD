@@ -1,0 +1,156 @@
+---
+title: "Modeling Customer Life and Transactions"
+author: "Latentview Analytics"
+date: "August 12, 2015"
+output:
+  beamer_presentation:
+    theme: "AnnArbor"
+    colortheme: "dolphin"
+    fonttheme: "structurebold"
+    highlight: tango
+---
+
+## Two Key Questions...
+
+- How long will the customers remain alive?
+- What is the net cash flow per period while alive
+
+## Depends on the business settings
+
+![](images/CustomerBases.png)
+
+
+## Traditional Approaches
+
+- There is no well established theory!
+- The observed variables (e.g Recency, frequency, spend) are only imperfect indicators of
+underlying behavioral characteristics.
+- Different slices of data will yield different values of the variable and therefore different parameter estimates and different forecasts!
+
+Challenges
+
+- It is impossible to measure all the variables that determine an individuals buying behavior in any
+setting.
+- Buying behavior hence must be expressed in stochastic terms so as to take into account our ignorance(or lack
+of data) regarding these determinants
+
+## RFM Family of Models
+
+Models use three variables: 
+
+- Recency of purchases 
+- Frequency of purchases 
+- Monetary value of purchases
+
+Used for non-contractual purchasing
+
+Data needed: dates and amounts of purchases for individual customers
+
+
+## Buy Till You Die Model
+
+- Increase accuracy by looking at customer level data
+- Transaction Process ("Buy")
+    + while active, the number of transactions made by a customer follows a Poisson Process with a transaction rate
+    + Transaction rates are distributed gamma across the population
+- Dropout Process ("Die")
+    + Each customer has an unobserved life time length, which is distributed exponential with a dropout rate
+    + Dropout rates are distributed gamma across a population
+- Approximates complexity in customer behaviour
+
+## Gamma, Poisson & Expontential distributions
+
+```{r echo=FALSE}
+par(mfrow = c(2,2))
+plot( dpois( x=0:20, lambda=1 ), type="b")
+
+```
+
+## Calibration and Holdout Period
+
+
+## Example with Paypal Data
+
+```{r, include=FALSE }
+# Import the data and create the customer-by-time-matrix
+# Get ready to model
+
+##Install packages
+toInstallCandidates <- c("ggplot2", "reshape2", "plyr", "lubridate", "devtools", "gsl")
+
+# check if pkgs are already present
+
+toInstall <- toInstallCandidates[!toInstallCandidates%in%library()$results[,1]] 
+if(length(toInstall)!=0)
+{install.packages(toInstall, repos = "http://cran.r-project.org")}
+
+# load pkgs
+lapply(toInstallCandidates, library, character.only = TRUE)
+
+
+# Cleanup existing installation of BTYD
+if ("package:BTYD" %in% search()) { detach("package:BTYD", unload=TRUE) }
+if ("BTYD" %in% rownames(installed.packages())) { remove.packages("BTYD") }
+
+#Change local to 1 if using the local version of BTYD instead of CRAN version
+local <-1
+
+if (local){
+  devtools::install_github("jamespaul007/BTYD", ref="pnbd-fix")
+} else{
+  install.packages("BTYD")
+}
+library(BTYD)
+
+elogFile <- "TxData.csv"
+elog <- dc.ReadLines(elogFile, cust.idx = 1,
+                     date.idx = 2, sales.idx = 3)
+elog$date <- as.Date(elog$date, "%m/%d/%Y")
+```
+
+
+```{r, echo=TRUE}
+head(elog, 10)
+```
+
+## Plot Sales across time
+
+```{r, echo=FALSE}
+qplot(date, sales, data = elog)
+```
+
+## Pre-processing
+
+- Combine transactions on the same day
+- Customer by Sufficient Matrix
+    * x - Number of repeat transactions (Frequency)
+    * t.x - Number of recent repeat transactions
+    * T.cal - Length of calibration period
+- Customer by Time Matrix
+    * 
+
+```{r, include=FALSE} 
+T.cal <- as.Date("2013-12-31")
+simData <- dc.ElogToCbsCbt(elog, per="week", T.cal)
+cal.cbs <- simData$cal$cbs
+cal.cbt <- simData$cal$cbt
+
+# for Holdout period
+hold.cbs <- simData$holdout$cbs
+head(hold.cbs)
+hold.cbt <- simData$holdout$cbt
+```
+
+## Customer by Sufficient Matrix
+
+```{r, echo=TRUE}
+head(cal.cbs)
+```
+
+## Customer by Time Matrix
+
+```{r, echo=TRUE}
+head(cal.cbt)
+```
+
+

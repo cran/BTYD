@@ -52,6 +52,7 @@ ggplot(as.data.frame(p.alives),aes(x=p.alives))+
 censor <- 7
 pnbd.PlotFrequencyInCalibration(params, cal.cbs, censor)
 
+
 # Verify in Holdout Period
 x.star <- hold.cbs[,"x.star"]
 comp <- pnbd.PlotFreqVsConditionalExpectedFrequency(params, T.star=52, cal.cbs, x.star, censor)

@@ -31,7 +31,7 @@ library(BTYD)
 elogFile <- "TxData.csv"
 elog <- dc.ReadLines(elogFile, cust.idx = 1,
                      date.idx = 2, sales.idx = 3)
-head(elog)
+head(elog,10)
 elog$date <- as.Date(elog$date, "%m/%d/%Y");
 head(elog)
 summary(elog)
@@ -44,7 +44,15 @@ summary(elog)
 max(elog$date);
 min(elog$date);
 qplot(date, sales, data = elog)
-xtabs( sales ~ cust, data =elog)
+
+#p<-ggplot(elog, aes(date, sales))
+#p+geom_point(aes(color=factor(sales<=3*sd(sales))))
+
+#Removing outliers
+#elog$outlier<-factor(elog$sales<=3*sd(elog$sales))
+#summary(elog)
+#elog<-subset(elog, outlier=TRUE, select=cust:sales)
+#xtabs( sales ~ cust, data =elog)
 
 # Approach #1
 # Merge transactions on the same day
