@@ -38,7 +38,6 @@ for (i in seq(10, 25, 5)){
     t.x = 20, T.cal = 39)
   cat ("x:",i,"\t Expectation:",cond.expectation, fill = TRUE)
 }
-bgnbd.PlotFrequencyInCalibration(params, cal.cbs, 7)
 
 censor <- 7
 bgnbd.PlotFrequencyInCalibration(params, cal.cbs, censor)
