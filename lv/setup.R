@@ -2,7 +2,7 @@
 # Get ready to model
 
 ##Install packages
-toInstallCandidates <- c("ggplot2", "reshape2", "plyr", "lubridate", "devtools")
+toInstallCandidates <- c("ggplot2", "reshape2", "plyr", "lubridate", "devtools", "gsl")
 
 # check if pkgs are already present
 
