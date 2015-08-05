@@ -19,10 +19,10 @@ if ("package:BTYD" %in% search()) { detach("package:BTYD", unload=TRUE) }
 if ("BTYD" %in% rownames(installed.packages())) { remove.packages("BTYD") }
 
 #Change local to 1 if using the local version of BTYD instead of CRAN version
-local <-0
+local <-1
 
 if (local){
-  devtools::install_github("jamespaul007/BTYD")
+  devtools::install_github("jamespaul007/BTYD", ref="pnbd-fix")
 } else{
   install.packages("BTYD")
 }
@@ -37,9 +37,9 @@ head(elog)
 summary(elog)
 
 # Optional - Sample the data
-class(elog)
-elog <- elog[sample(nrow(elog), 3000), ]
-str(elog)
+#class(elog)
+#elog <- elog[sample(nrow(elog), 3000), ]
+#str(elog)
 
 max(elog$date);
 min(elog$date);
