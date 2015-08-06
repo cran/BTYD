@@ -1,6 +1,24 @@
 ################################################## Pareto/NBD estimation, visualization functions
 
 library(hypergeo)
+library(gsl)
+
+h2f1 <- function(a,b,c,z){
+    lenz <- length(z)
+    j = 0
+    uj <- 1:lenz
+    uj <- uj/uj
+    y <- uj
+    lteps <- 0
+    while (lteps<lenz){
+        lasty <- y
+        j <- j+1
+        uj <- uj*(a+j-1)*(b+j-1)/(c+j-1)*z/j
+        y <- y + uj
+        lteps <- sum(y==lasty)
+    }
+    y
+}
 
 pnbd.cbs.LL <- function(params, cal.cbs) {
     
@@ -18,79 +36,54 @@ pnbd.cbs.LL <- function(params, cal.cbs) {
     return(sum(custs * pnbd.LL(params, x, t.x, T.cal)))
 }
 
-pnbd.LL <- function(params, x, t.x, T.cal) {
-    
-    h2f1 <- function(a, b, c, z) {
-        lenz <- length(z)
-        j = 0
-        uj <- 1:lenz
-        uj <- uj/uj
-        y <- uj
-        lteps <- 0
-        
-        while (lteps < lenz) {
-            lasty <- y
-            j <- j + 1
-            uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
-            y <- y + uj
-            lteps <- sum(y == lasty)
-        }
-        return(y)
-    }
-    
-    max.length <- max(length(x), length(t.x), length(T.cal))
-    
-    if (max.length%%length(x)) 
-        warning("Maximum vector length not a multiple of the length of x")
-    if (max.length%%length(t.x)) 
-        warning("Maximum vector length not a multiple of the length of t.x")
-    if (max.length%%length(T.cal)) 
-        warning("Maximum vector length not a multiple of the length of T.cal")
-    
-    dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.LL")
-    
-    if (any(x < 0) || !is.numeric(x)) 
-        stop("x must be numeric and may not contain negative numbers.")
-    if (any(t.x < 0) || !is.numeric(t.x)) 
-        stop("t.x must be numeric and may not contain negative numbers.")
-    if (any(T.cal < 0) || !is.numeric(T.cal)) 
-        stop("T.cal must be numeric and may not contain negative numbers.")
-    
-    
-    x <- rep(x, length.out = max.length)
-    t.x <- rep(t.x, length.out = max.length)
-    T.cal <- rep(T.cal, length.out = max.length)
-    
-    r <- params[1]
-    alpha <- params[2]
-    s <- params[3]
-    beta <- params[4]
-    
-    maxab <- max(alpha, beta)
-    absab <- abs(alpha - beta)
-    param2 <- s + 1
-    if (alpha < beta) {
-        param2 <- r + x
-    }
-    part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
-    part2 <- -(r + x) * log(alpha + T.cal) - s * log(beta + T.cal)
-    if (absab == 0) {
-        partF <- -(r + s + x) * log(maxab + t.x) + log(1 - ((maxab + t.x)/(maxab + 
-            T.cal))^(r + s + x))
-    } else {
-        F1 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
-        F2 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * ((maxab + 
-            t.x)/(maxab + T.cal))^(r + s + x)
-        
-        partF = -(r + s + x) * log(maxab + t.x) + log(F1 - F2)
-        
-        
-    }
-    part3 <- log(s) - log(r + s + x) + partF
-    return(part1 + log(exp(part2) + exp(part3)))
+pnbd.LL= function (params, x, t.x, T.cal) 
+{
+  max.length <- max(length(x), length(t.x), length(T.cal))
+  if (max.length%%length(x)) 
+    warning("Maximum vector length not a multiple of the length of x")
+  if (max.length%%length(t.x)) 
+    warning("Maximum vector length not a multiple of the length of t.x")
+  if (max.length%%length(T.cal)) 
+    warning("Maximum vector length not a multiple of the length of T.cal")
+  dc.check.model.params(c("r", "alpha", "s", "beta"), params, 
+                        "pnbd.LL")
+  if (any(x < 0) || !is.numeric(x)) 
+    stop("x must be numeric and may not contain negative numbers.")
+  if (any(t.x < 0) || !is.numeric(t.x)) 
+    stop("t.x must be numeric and may not contain negative numbers.")
+  if (any(T.cal < 0) || !is.numeric(T.cal)) 
+    stop("T.cal must be numeric and may not contain negative numbers.")
+  x <- rep(x, length.out = max.length)
+  t.x <- rep(t.x, length.out = max.length)
+  T.cal <- rep(T.cal, length.out = max.length)
+  r <- params[1]
+  alpha <- params[2]
+  s <- params[3]
+  beta <- params[4]
+  maxab <- max(alpha, beta)
+  absab <- abs(alpha - beta)
+  param2 <- s + 1
+  if (alpha < beta) {
+    param2 <- r + x
+  }
+  part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
+  part2 <- -(r + x) * log(alpha + T.cal) - s * log(beta + T.cal)
+  if (absab == 0) {    
+    part2_times_F1_min_F2 <- ( (alpha+T.cal)/(maxab+t.x) )^(r+x) * (beta+T.cal)^s / 
+      ((maxab+t.x)^s) -
+      ( (alpha+T.cal)/(maxab+T.cal) )^(r+x) * (beta+T.cal)^s / 
+      ((maxab+t.x)^s) 
+  }
+  else {
+    part2_times_F1_min_F2 = h2f1(r+s+x, param2, r+s+x+1, absab / (maxab+t.x)) * 
+      ( (alpha+T.cal)/(maxab+t.x) )^(r+x) * (beta+T.cal)^s / 
+      ((maxab+t.x)^s) -
+      h2f1(r+s+x, param2, r+s+x+1, absab / (maxab+T.cal)) * 
+      ( (alpha+T.cal)/(maxab+T.cal) )^(r+x) * (beta+T.cal)^s / 
+      ((maxab+t.x)^s)
+  }
+  return(part1 + part2 + log(1+(s/(r+s+x))*part2_times_F1_min_F2) )
 }
-
-
 
 pnbd.compress.cbs <- function(cbs, rounding = 3) {
     
@@ -113,8 +106,8 @@ pnbd.compress.cbs <- function(cbs, rounding = 3) {
     ## Round x, t.x and T.cal to the desired level
     cbs[, c("x", "t.x", "T.cal")] <- round(cbs[, c("x", "t.x", "T.cal")], rounding)
     
-    ## Aggregate every column that is not x, t.x or T.cal by those columns. Do this by
-    ## summing entries which have the same x, t.x and T.cal.
+    ## Aggregate every column that is not x, t.x or T.cal by those columns. Do this
+    ## by summing entries which have the same x, t.x and T.cal.
     cbs <- as.matrix(aggregate(cbs[, !(colnames(cbs) %in% c("x", "t.x", "T.cal"))], 
         by = list(x = cbs[, "x"], t.x = cbs[, "t.x"], T.cal = cbs[, "T.cal"]), sum))
     
@@ -124,7 +117,8 @@ pnbd.compress.cbs <- function(cbs, rounding = 3) {
     return(cbs)
 }
 
-pnbd.EstimateParameters <- function(cal.cbs, par.start = c(1, 1, 1, 1), max.param.value = 10000) {
+pnbd.EstimateParameters <- function(cal.cbs, par.start = c(1, 1, 1, 1), 
+    max.param.value = 10000) {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), par.start, "pnbd.EstimateParameters")
     
@@ -210,29 +204,26 @@ pnbd.pmf.General <- function(params, t.start, t.end, x) {
         s)
     
     B.1 <- rep(NA, max.length)
-    
-    B.1[alpha > beta + t.start] <- Re(hypergeo(r + s, s + 1, r + s + x + 1, (alpha - 
-        beta - t.start)/alpha))/(alpha^(r + s))
-    B.1[alpha <= beta + t.start] <- Re(hypergeo(r + s, r + x, r + s + x + 1, (beta + 
-        t.start - alpha)/(beta + t.start)))/((beta + t.start)^(r + s))
-    
+    B.1[alpha > beta + t.start] <- hyperg_2F1(r + s, s + 1, r + s + x + 1, (alpha - 
+        beta - t.start)/alpha)/(alpha^(r + s))
+    B.1[alpha <= beta + t.start] <- hyperg_2F1(r + s, r + x, r + s + x + 1, (beta + 
+        t.start - alpha)/(beta + t.start))/((beta + t.start)^(r + s))
     
     B.2 <- function(r, alpha, s, beta, t.start, t.end, x, ii) {
         if (alpha > (beta + t.start)) {
-            Re(hypergeo(r + s + ii, s + 1, r + s + x + 1, (alpha - beta - t.start)/(alpha + 
-                t.end - t.start)))/((alpha + t.end - t.start)^(r + s + ii))
+            hyperg_2F1(r + s + ii, s + 1, r + s + x + 1, (alpha - beta - t.start)/(alpha + 
+                t.end - t.start))/((alpha + t.end - t.start)^(r + s + ii))
         } else {
-            Re(hypergeo(r + s + ii, r + x, r + s + x + 1, (beta + t.start - alpha)/(beta + 
-                t.end)))/((beta + t.end)^(r + s + ii))
+            hyperg_2F1(r + s + ii, r + x, r + s + x + 1, (beta + t.start - alpha)/(beta + 
+                t.end))/((beta + t.end)^(r + s + ii))
         }
     }
     
-    
     equation.part.2.summation <- rep(NA, max.length)
-    ## In the paper, for i=0 we have t^i / i * B(r+s, i). the denominator reduces to:
-    ## i * Gamma (r+s) * Gamma(i) / Gamma (r+s+i) : Gamma (r+s) * Gamma(i+1) / Gamma
-    ## (r+s+i) : Gamma (r+s) * Gamma(1) / Gamma(r+s) : 1 The 1 represents this reduced
-    ## piece of the equation.
+    ## In the paper, for i=0 we have t^i / i * B(r+s, i). the denominator reduces
+    ## to: i * Gamma (r+s) * Gamma(i) / Gamma (r+s+i) : Gamma (r+s) * Gamma(i+1) /
+    ## Gamma (r+s+i) : Gamma (r+s) * Gamma(1) / Gamma(r+s) : 1 The 1 represents
+    ## this reduced piece of the equation.
     
     for (i in 1:max.length) {
         ii <- c(1:x[i])
@@ -248,7 +239,8 @@ pnbd.pmf.General <- function(params, t.start, t.end, x) {
 }
 
 
-pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) {
+pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, 
+    T.cal) {
     
     max.length <- max(length(T.star), length(x), length(t.x), length(T.cal))
     
@@ -289,25 +281,8 @@ pnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) 
     return(P1 * P2 * P3)
 }
 
+# pnbd.PAlive was contributed by Ricardo Pereira
 pnbd.PAlive <- function(params, x, t.x, T.cal) {
-    
-    h2f1 <- function(a, b, c, z) {
-        lenz <- length(z)
-        j = 0
-        uj <- 1:lenz
-        uj <- uj/uj
-        y <- uj
-        lteps <- 0
-        
-        while (lteps < lenz) {
-            lasty <- y
-            j <- j + 1
-            uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
-            y <- y + uj
-            lteps <- sum(y == lasty)
-        }
-        return(y)
-    }
     
     max.length <- max(length(x), length(t.x), length(T.cal))
     
@@ -339,19 +314,26 @@ pnbd.PAlive <- function(params, x, t.x, T.cal) {
     
     A0 <- 0
     if (alpha >= beta) {
-        F1 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + t.x))
-        F2 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + T.cal))
-        A0 <- F1/((alpha + t.x)^(r + s + x)) - F2/((alpha + T.cal)^(r + s + x))
+        F1 <- hyperg_2F1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + 
+            t.x))
+        F2 <- hyperg_2F1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + 
+            T.cal))
+#        A0 <- F1/((alpha + t.x)^(r + s + x)) - F2/((alpha + T.cal)^(r + s + x))
+         X1 <- F1*((alpha+T.cal)/(alpha+t.x))^(r+x)*((beta+T.cal)/(alpha+t.x))^s
+         X2 <- F2*((beta+T.cal)/(alpha+T.cal))^s
+ 
     } else {
-        F1 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + t.x))
-        F2 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + T.cal))
-        A0 <- F1/((beta + t.x)^(r + s + x)) - F2/((beta + T.cal)^(r + s + x))
+        F1 <- hyperg_2F1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + 
+            t.x))
+        F2 <- hyperg_2F1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + 
+            T.cal))
+#       A0 <- F1/((beta + t.x)^(r + s + x)) - F2/((beta + T.cal)^(r + s + x))
+        X1 <- F1*((alpha+T.cal)/(beta+t.x))^(r+x)*((beta+T.cal)/(beta+t.x))^s
+        X2 <- F2*((alpha+T.cal)/(beta+T.cal))^(r+x)
+        return((1 + s/(r + s + x) * (X1-X2))^(-1))
     }
-    
-    
-    
-    
-    return((1 + s/(r + s + x) * (alpha + T.cal)^(r + x) * (beta + T.cal)^s * A0)^(-1))
+#    return((1 + s/(r + s + x) * (alpha + T.cal)^(r + x) * (beta + T.cal)^s * A0)^(-1))
+     return((1 + s/(r + s + x) * (X1-X2))^(-1))
 }
 
 pnbd.Expectation <- function(params, t) {
@@ -440,8 +422,8 @@ pnbd.PlotFrequencyInCalibration <- function(params, cal.cbs, censor, plotZero = 
 }
 
 
-pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star, cal.cbs, 
-    x.star, censor, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
+pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star, 
+    cal.cbs, x.star, censor, xlab = "Calibration period transactions", ylab = "Holdout period transactions", 
     xticklab = NULL, title = "Conditional Expectation") {
     
     tryCatch(x <- cal.cbs[, "x"], error = function(e) stop("Error in pnbd.PlotFreqVsConditionalExpectedFrequency: cal.cbs must have a frequency column labelled \"x\""))
@@ -507,9 +489,9 @@ pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params, T.star, cal.cbs,
     
 }
 
-pnbd.PlotRecVsConditionalExpectedFrequency <- function(params, cal.cbs, T.star, x.star, 
-    xlab = "Calibration period recency", ylab = "Holdout period transactions", xticklab = NULL, 
-    title = "Actual vs. Conditional Expected Transactions by Recency") {
+pnbd.PlotRecVsConditionalExpectedFrequency <- function(params, cal.cbs, 
+    T.star, x.star, xlab = "Calibration period recency", ylab = "Holdout period transactions", 
+    xticklab = NULL, title = "Actual vs. Conditional Expected Transactions by Recency") {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.PlotRecVsConditionalExpectedFrequency")
     
@@ -618,7 +600,8 @@ pnbd.PlotDropoutRateHeterogeneity <- function(params, lim = NULL) {
     return(rbind(x.axis.ticks, heterogeneity))
 }
 
-pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot, n.periods.final) {
+pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot, 
+    n.periods.final) {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.ExpectedCumulativeTransactions")
     
@@ -646,8 +629,8 @@ pnbd.ExpectedCumulativeTransactions <- function(params, T.cal, T.tot, n.periods.
 }
 
 
-pnbd.PlotTrackingCum <- function(params, T.cal, T.tot, actual.cu.tracking.data, xlab = "Week", 
-    ylab = "Cumulative Transactions", xticklab = NULL, title = "Tracking Cumulative Transactions") {
+pnbd.PlotTrackingCum <- function(params, T.cal, T.tot, actual.cu.tracking.data, 
+    xlab = "Week", ylab = "Cumulative Transactions", xticklab = NULL, title = "Tracking Cumulative Transactions") {
     
     dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.Plot.PlotTrackingCum")
     
@@ -762,9 +745,9 @@ pnbd.DERT <- function(params, x, t.x, T.cal, d) {
         F1 <- 1/((maxab + t.x)^(r + s + x))
         F2 <- 1/((maxab + T.cal)^(r + s + x))
     } else {
-        F1 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x)))/((maxab + 
+        F1 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))/((maxab + 
             t.x)^(r + s + x))
-        F2 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)))/((maxab + 
+        F2 <- hyperg_2F1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal))/((maxab + 
             T.cal)^(r + s + x))
     }
     
@@ -772,10 +755,8 @@ pnbd.DERT <- function(params, x, t.x, T.cal, d) {
     
     z <- d * (beta + T.cal)
     
-    tricomi.part.1 = ((z)^(1 - s))/(s - 1) * genhypergeo(U = c(1), L = c(2 - s), 
-        check_mod = FALSE, z)
-    tricomi.part.2 = gamma(1 - s) * genhypergeo(U = c(s), L = c(s), check_mod = FALSE, 
-        z)
+    tricomi.part.1 = ((z)^(1 - s))/(s - 1) * hyperg_1F1(1, 2 - s, z)
+    tricomi.part.2 = gamma(1 - s) * hyperg_1F1(s, s, z)
     tricomi = tricomi.part.1 + tricomi.part.2
     
     result <- exp(r * log(alpha) + s * log(beta) + (s - 1) * log(d) + lgamma(r + 
@@ -825,4 +806,4 @@ pnbd.Plot.DERT <- function(params, x, t.x, T.cal, d, type = "wireframe") {
     }
     return(DERT)
 }
- 
+
