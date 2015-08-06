@@ -1,4 +1,5 @@
 library(devtools)
+library(gsl)
 devtools::install_github("mplatzer/BTYDplus", dependencies=TRUE)
 library(BTYDplus)
 demo(package="BTYDplus")
