@@ -1,0 +1,1185 @@
+
+---
+title: "BTYD Pareto/NBD likelihood rework"
+author: "Gabi Huiber"
+output:
+  html_document: default
+  pdf_document: default
+params:
+  repo: patch_btyd
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+# Problem statement
+
+The Pareto/NBD likelihood function for a random individual 
+is spelled out in 3 different places in the `R/pnbd.R` script of the original `BTYD` package from CRAN:
+
+ - in the definition of `pnbd.LL()`, called by the estimating function `pnbd.cbs.LL()`
+ - in the definition of `pnbd.PAlive()` -- the probability that somebody is still active
+ - in the definition of `pnbd.DERT()` -- the estimated discounted remaining CLV.
+
+It is also used indirectly in `pnbd.ConditionalExpectedTransactions()`, 
+which calls `pnbd.PAlive()`.
+
+This likelihood function should instead be defined once and used everywhere. This is 
+especially important because it also needs a fix: in log form, its original implementation 
+suffers from the log-sum-exp problem described
+[here](https://lips.cs.princeton.edu/computing-log-sum-exp/) and 
+[here](https://github.com/theofilos/BTYD). 
+
+If we define it once, we need only fix it once.
+
+# What do the original implementations look like?
+
+## pnbd.LL (lines 23-90 of [pnbd.R](https://github.com/cran/BTYD/blob/master/R/pnbd.R))
+
+```{r pnbd.LL}
+h2f1 <- function(a, b, c, z) {
+  lenz <- length(z)
+  j = 0
+  uj <- 1:lenz
+  uj <- uj/uj
+  y <- uj
+  lteps <- 0
+  
+  while (lteps < lenz) {
+    lasty <- y
+    j <- j + 1
+    uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+    y <- y + uj
+    lteps <- sum(y == lasty)
+  }
+  return(y)
+}
+
+max.length <- max(length(x), length(t.x), length(T.cal))
+
+if (max.length%%length(x)) 
+  warning("Maximum vector length not a multiple of the length of x")
+if (max.length%%length(t.x)) 
+  warning("Maximum vector length not a multiple of the length of t.x")
+if (max.length%%length(T.cal)) 
+  warning("Maximum vector length not a multiple of the length of T.cal")
+
+dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.LL")
+
+if (any(x < 0) || !is.numeric(x)) 
+  stop("x must be numeric and may not contain negative numbers.")
+if (any(t.x < 0) || !is.numeric(t.x)) 
+  stop("t.x must be numeric and may not contain negative numbers.")
+if (any(T.cal < 0) || !is.numeric(T.cal)) 
+  stop("T.cal must be numeric and may not contain negative numbers.")
+
+
+x <- rep(x, length.out = max.length)
+t.x <- rep(t.x, length.out = max.length)
+T.cal <- rep(T.cal, length.out = max.length)
+
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+maxab <- max(alpha, beta)
+absab <- abs(alpha - beta)
+param2 <- s + 1
+if (alpha < beta) {
+  param2 <- r + x
+}
+part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
+part2 <- -(r + x) * log(alpha + T.cal) - s * log(beta + T.cal)
+if (absab == 0) {
+  partF <- -(r + s + x) * log(maxab + t.x) + log(1 - ((maxab + t.x)/(maxab + 
+                                                                       T.cal))^(r + s + x))
+} else {
+  F1 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
+  F2 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * 
+    ((maxab + t.x)/(maxab + T.cal))^(r + s + x)
+  
+  partF = -(r + s + x) * log(maxab + t.x) + log(F1 - F2)
+  
+  
+}
+part3 <- log(s) - log(r + s + x) + partF
+return(part1 + log(exp(part2) + exp(part3)))
+```
+
+## pnbd.PAlive (lines 294-354 of [pnbd.R](https://github.com/cran/BTYD/blob/master/R/pnbd.R))
+
+```{r pnbd.PAlive}
+h2f1 <- function(a, b, c, z) {
+  lenz <- length(z)
+  j = 0
+  uj <- 1:lenz
+  uj <- uj/uj
+  y <- uj
+  lteps <- 0
+  
+  while (lteps < lenz) {
+    lasty <- y
+    j <- j + 1
+    uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+    y <- y + uj
+    lteps <- sum(y == lasty)
+  }
+  return(y)
+}
+
+max.length <- max(length(x), length(t.x), length(T.cal))
+
+if (max.length%%length(x)) 
+  warning("Maximum vector length not a multiple of the length of x")
+if (max.length%%length(t.x)) 
+  warning("Maximum vector length not a multiple of the length of t.x")
+if (max.length%%length(T.cal)) 
+  warning("Maximum vector length not a multiple of the length of T.cal")
+
+dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.PAlive")
+
+if (any(x < 0) || !is.numeric(x)) 
+  stop("x must be numeric and may not contain negative numbers.")
+if (any(t.x < 0) || !is.numeric(t.x)) 
+  stop("t.x must be numeric and may not contain negative numbers.")
+if (any(T.cal < 0) || !is.numeric(T.cal)) 
+  stop("T.cal must be numeric and may not contain negative numbers.")
+
+
+x <- rep(x, length.out = max.length)
+t.x <- rep(t.x, length.out = max.length)
+T.cal <- rep(T.cal, length.out = max.length)
+
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+A0 <- 0
+if (alpha >= beta) {
+  F1 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + t.x))
+  F2 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + T.cal))
+  A0 <- F1/((alpha + t.x)^(r + s + x)) - F2/((alpha + T.cal)^(r + s + x))
+} else {
+  F1 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + t.x))
+  F2 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + T.cal))
+  A0 <- F1/((beta + t.x)^(r + s + x)) - F2/((beta + T.cal)^(r + s + x))
+}
+
+return((1 + s/(r + s + x) * (alpha + T.cal)^(r + x) * (beta + T.cal)^s * A0)^(-1))
+```
+
+## pnbd.DERT (lines 725-771 of [pnbd.R](https://github.com/cran/BTYD/blob/master/R/pnbd.R))
+
+```{r pnbd.DERT}
+max.length <- max(length(x), length(t.x), length(T.cal))
+
+if (max.length%%length(x)) 
+  warning("Maximum vector length not a multiple of the length of x")
+if (max.length%%length(t.x)) 
+  warning("Maximum vector length not a multiple of the length of t.x")
+if (max.length%%length(T.cal)) 
+  warning("Maximum vector length not a multiple of the length of T.cal")
+
+dc.check.model.params(c("r", "alpha", "s", "beta"), params, "pnbd.DERT")
+
+if (any(x < 0) || !is.numeric(x)) 
+  stop("x must be numeric and may not contain negative numbers.")
+if (any(t.x < 0) || !is.numeric(t.x)) 
+  stop("t.x must be numeric and may not contain negative numbers.")
+if (any(T.cal < 0) || !is.numeric(T.cal)) 
+  stop("T.cal must be numeric and may not contain negative numbers.")
+
+
+x <- rep(x, length.out = max.length)
+t.x <- rep(t.x, length.out = max.length)
+T.cal <- rep(T.cal, length.out = max.length)
+
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+maxab = max(alpha, beta)
+absab = abs(alpha - beta)
+param2 = s + 1
+if (alpha < beta) {
+  param2 = r + x
+}
+part1 <- (alpha^r * beta^s/gamma(r)) * gamma(r + x)
+part2 <- 1/((alpha + T.cal)^(r + x) * (beta + T.cal)^s)
+if (absab == 0) {
+  F1 <- 1/((maxab + t.x)^(r + s + x))
+  F2 <- 1/((maxab + T.cal)^(r + s + x))
+} else {
+  F1 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x)))/((maxab + 
+                                                                                t.x)^(r + s + x))
+  F2 <- Re(hypergeo(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)))/((maxab + 
+                                                                                  T.cal)^(r + s + x))
+}
+
+likelihood = part1 * (part2 + (s/(r + s + x)) * (F1 - F2))
+```
+
+# How might we clean up?
+
+## Move the input checks somewhere else
+
+All three definitions check for two conditions that could be checked elsewhere. One is that 
+the vectors x, t.x, and T.cal should have the same length; the other is that their elements 
+should all be zero or greater. 
+
+The first condition is met implicitly if you pass these vectors along as a matrix, which is how 
+`pnbd.cbs.LL()` gets them anyway: as columns in the `cal.cbs` matrix, named x, t.x, T.cal in this order. 
+
+The second is easier to check with one line if you do pass them along as a matrix: 
+`sum(matrix >= 0) == nrow(matrix) * ncol(matrix)`.
+
+This input check could be a stand-alone helper function. That function is now `dc.InputCheck`. See the help file for details.
+
+## Move the h2f1 somewhere else; define it only once
+
+Two of the likelihood implementations use a helper for the Gaussian hypergeometric 
+function that could be defined once as a standalone function, like so:
+
+```{r h2f1}
+#' Use Bruce Hardie's Gaussian hypergeometric implementation
+#'
+#' In benchmarking \code{\link{pnbd.LL}} runs more quickly and 
+#' it returns the same results if it uses this helper instead of 
+#' \code{\link[hypergeo]{hypergeo}}, which is the default. But \code{h2f1} 
+#' is such a barebones function that in some edge cases it will keep
+#' going until you get a segfault, where \code{\link[hypergeo]{hypergeo}} 
+#' would have done the right thing and failed with a proper error message.
+#'
+#' @param a, counterpart to A in \code{\link[hypergeo]{hypergeo}}
+#' @param b, counterpart to B in \code{\link[hypergeo]{hypergeo}}
+#' @param c, counterpart to C in \code{\link[hypergeo]{hypergeo}}
+#' @param z, counterpart to z in \code{\link[hypergeo]{hypergeo}}
+#' @seealso \code{\link[hypergeo]{hypergeo}}
+#' @references Fader, Peter S., and Bruce G.S. Hardie. "A Note on Deriving the Pareto/NBD Model and 
+#' Related Expressions." November. 2005. Web. \url{http://www.brucehardie.com/notes/008/}
+h2f1 <- function(a, b, c, z) {
+  lenz <- length(z)
+  j = 0
+  uj <- 1:lenz
+  uj <- uj/uj
+  y <- uj
+  lteps <- 0
+  
+  while (lteps < lenz) {
+    lasty <- y
+    j <- j + 1
+    uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+    y <- y + uj
+    lteps <- sum(y == lasty)
+  }
+  return(y)
+}
+```
+
+But another possibility might be to simply not use this implementation at all: 
+`BTYD` already requires the `hypergeo` package.
+
+## A first pass for cleaning up: the `lite` versions
+
+Without the input checks and with this `h2f1` helper set aside, and after noticing that all three functions of interest use the same naming convention for the four parameters -- `params[1:4]` are called 
+`r`, `alpha`, `s` and `beta` -- the definitions become:
+
+### pnbd.LL.lite
+
+```{r pnbd.LL.lite}
+maxab <- max(alpha, beta)
+absab <- abs(alpha - beta)
+param2 <- s + 1
+if (alpha < beta) {
+  param2 <- r + x
+}
+part1 <- r * log(alpha) + 
+  s * log(beta) - 
+  lgamma(r) + 
+  lgamma(r + x)
+part2 <- -(r + x) * log(alpha + T.cal) - 
+  s * log(beta + T.cal)
+if (absab == 0) {
+  partF <- -(r + s + x) * 
+    log(maxab + t.x) + 
+    log(1 - ((maxab + t.x)/(maxab + T.cal))^(r + s + x))
+} else {
+  F1 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + t.x))
+  F2 = h2f1(r + s + x, param2, r + s + x + 1, absab/(maxab + T.cal)) * 
+    ((maxab + t.x)/(maxab + T.cal))^(r + s + x)
+  partF = -(r + s + x) * log(maxab + t.x) + 
+    log(F1 - F2)
+}
+part3 <- log(s) - 
+  log(r + s + x) + 
+  partF
+return(part1 + log(exp(part2) + exp(part3)))
+```
+
+### pnbd.PAlive.lite
+
+```{r pnbd.PAlive.lite}
+A0 <- 0
+if (alpha >= beta) {
+  F1 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + t.x))
+  F2 <- h2f1(r + s + x, s + 1, r + s + x + 1, (alpha - beta)/(alpha + T.cal))
+  A0 <- F1/((alpha + t.x)^(r + s + x)) - F2/((alpha + T.cal)^(r + s + x))
+} else {
+  F1 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + t.x))
+  F2 <- h2f1(r + s + x, r + x, r + s + x + 1, (beta - alpha)/(beta + T.cal))
+  A0 <- F1/((beta + t.x)^(r + s + x)) - F2/((beta + T.cal)^(r + s + x))
+}
+
+return((1 + s/(r + s + x) * (alpha + T.cal)^(r + x) * (beta + T.cal)^s * A0)^(-1))
+```
+
+### pnbd.DERT.lite
+
+```{r pnbd.DERT.lite}
+maxab = max(alpha, beta)
+absab = abs(alpha - beta)
+param2 = s + 1
+if (alpha < beta) {
+  param2 = r + x
+}
+part1 <- (alpha^r * beta^s/gamma(r)) * gamma(r + x)
+part2 <- 1/((alpha + T.cal)^(r + x) * (beta + T.cal)^s)
+if (absab == 0) {
+  F1 <- 1/((maxab + t.x)^(r + s + x))
+  F2 <- 1/((maxab + T.cal)^(r + s + x))
+} else {
+  F1 <- Re(hypergeo(r + s + x, 
+                    param2, 
+                    r + s + x + 1, 
+                    absab/(maxab + t.x)))/((maxab + t.x)^(r + s + x))
+  F2 <- Re(hypergeo(r + s + x, 
+                    param2, 
+                    r + s + x + 1, 
+                    absab/(maxab + T.cal)))/((maxab + T.cal)^(r + s + x))
+}
+likelihood = part1 * (part2 + (s/(r + s + x)) * (F1 - F2))
+```
+
+# A second pass: the `lite2` versions
+
+Both the Gaussian hypergeometric function implementation shown [here](http://www.brucehardie.com/notes/008/pareto_nbd_MATLAB.pdf) and the official R package  [here](https://cran.r-project.org/web/packages/hypergeo/vignettes/hypergeometric.pdf) will 
+return 1 if the fourth parameter, z, is 0, no matter what values the first 3 
+parameters --  a, b, and c -- take. 
+
+But saying that z = 0 is the same as saying alpha = beta in our usage of the 
+hypergeometric, because in our calls to it the fourth parameter is a ratio with 
+abs(alpha - beta) in the numerator.
+
+In fact, the MATLAB implementation described [here](http://www.brucehardie.com/notes/008/pareto_nbd_MATLAB.pdf) 
+shows a hypergeometric that takes only slightly different parameters depending on the relationship 
+between alpha and beta. The three R implementations above almost all check the inequality alpha > beta 
+at one point or another, but maybe that too could be done only once, in order to define a general 
+parameterization that would allow us to skip the checks thereafter. This general parameterization might be:
+
+### generalParameterization
+
+```{r generalParameterization}
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+maxab <- max(alpha, beta)
+absab <- abs(alpha - beta)
+
+param2 <- s + 1
+if (alpha < beta) {
+  param2 <- r + x
+}
+
+a <- alpha + T.cal
+b <- maxab + t.x
+c <- beta + T.cal
+d <- maxab + T.cal
+w <- r + s + x
+```
+
+With this set aside and available in one place, `pnbd.PAlive()` becomes:
+
+### pnbd.PAlive.lite2
+
+```{r pnbd.PAlive.lite2}
+F1 <- h2f1(w, param2, w + 1, absab / b)
+F2 <- h2f1(w, param2, w + 1, absab / d)
+A0 <- F1/(b^w) - F2/(d^w)
+return((1 + s/w * a^(w - s) * c^s * A0)^(-1))
+```
+
+And then pnbd.LL(), which returns a log likelihood and must dodge the log-sum-exp problem, becomes:
+
+### pnbd.LL.lite2
+
+```{r pnbd.LL.lite2}
+# stuff below is almost equivalent to fix proposed at
+# https://github.com/theofilos/BTYD. the exception is 
+# a small correction that allows A0 to be computed the
+# same way that it is in pnbd.PAlive. 
+
+part1 <- r * log(alpha) + 
+  s * log(beta) - 
+  lgamma(r) + 
+  lgamma(r + x)
+part2 <- (s-w) * log(a) - s * log(c) 
+
+F1 <- h2f1(w, param2, w + 1, absab / b)
+F2 <- h2f1(w, param2, w + 1, absab / d)
+A0 <- F1/(b^w) - F2/(d^w)
+
+return(part1 + part2 + log(1+(s/w) * exp(-part2) * A0))
+
+# The returned expression above makes use of the log-sum-exp trick as follows:
+#
+#  - first, ignore the part1 term. let's just pick apart the expression
+#    part2 + log(1+(s/w) * exp(-part2) * A0) and show that it's 
+#    equivalent to what the original pnbd.LL() definition returned
+#    as log(exp(part2) + exp(part3)). the part1 term is the same.
+#
+#  - let's re-arrange the terms inside the log expression:
+#    1 = exp(0)
+#      = exp(part2 - part2)
+#    (s/w) * exp(-part2) * A0 = A0 * s/w * exp(-part2)
+#                             = exp(log(A0 * s/w)) * exp(-part2)
+#                             = exp[log(A0 * s/w) - part2]
+#
+#  - now the log expressions is
+#    log(exp(part2 - part2) + exp(log(A0 * s/w) - part2))
+# 
+#  - and the original returned expression (excluding part1) becomes
+#    part2 + log(exp(part2 - part2) + exp(log(A0 * s/w) - part2))
+# 
+#  - this, by the log-sum-exp rule, is equivalent to
+#    log(exp(part2) + s/w * A0)
+#
+#  - now we only need to show that s/w * A0 = exp(part3) in the original
+#    pnbd.LL() definition. First, recap the new parameterization:
+#       a <- alpha + T.cal
+#       b <- maxab + t.x
+#       c <- beta + T.cal
+#       d <- maxab + T.cal
+#       w <- r + s + x
+#    and remember also that the old F2 is the new F2 times (b/d)^w
+#    
+#  - in this parameterization, the original part3 becomes:
+#     part3 = log(s) - log(w) - w * log(b) + log(F1 - F2 * (b/d)^w)
+#           = log(s/w) - log(b^w) + log(F1 - F2 * (b/d)^w)
+#           = log(s/w) + log((F1 - F2 * (b/d)^w)/b^w)
+#           = log(s/w) + log(F1/b^w - F2/d^w)
+#           = log(s/w) + log(A0). so:
+#     exp(part3) = exp(log(s/w + log(A0))
+#                = exp(log(s/w)) * exp(log(A0))
+#                = s/w * A0
+#
+# q.e.d. 
+# 
+# One more note: in the original pnbd.LL, partF is defined
+# within an if/else conditional. This is because if absab = 0, 
+# both F1 and F2 return 1 so the log(F1 - F2) expression is 
+# not computable. That if/else piece is not needed if you 
+# never take log(F1 - F2). And now, thanks to A0, we don't.
+```
+
+Finally, `pnbd.DERT()` becomes:
+
+### pnbd.DERT.lite2
+
+```{r pnbd.DERT.lite2}
+part1 <- (alpha^r * beta^s/gamma(r)) * gamma(r + x)
+part2 <- 1/(a^(w - s) * c^s)
+
+F1 <- Re(hypergeo(w, param2, w + 1, absab / b))
+F2 <- Re(hypergeo(w, param2, w + 1, absab / d))
+A0 <- F1/(b^w) - F2/(d^w)
+likelihood <- part1 * (part2 + (s/w) * A0)
+```
+
+# Two more things
+
+The chunks of code above show only the core pieces of `pnbd.LL()`, `pnbd.PAlive()`, and 
+`pnbd.DERT()` after input checks are defined outside the respective function and a general 
+parameterization is defined to make them use the same language. This makes it easier to 
+see what we should check next: 
+
+ 1. Could `Re(hypergeo(...))` do the job of `h2f1()` or vice-versa? They return identical results 
+ (the proof is in the `threeway_wakkthrough.R` script) so we should only keep one of them. Which one? 
+   * `h2f1()` looks clever and simple, but where they both run into edge cases `Re(hypergeo(...))` will 
+   fail quickly with some informative message along the lines of "series not converged" while `h2f1()` 
+   keeps going until -- I guess -- it runs into a segfault (didn't wait to see for sure). That makes me 
+   nervous. I'd rather use an official implementation. For an actual edge case example, 
+   see `Re(hypergeo::hypergeo(15,27,32,1))` vs. `h2f1(15,27,32,1)`.
+   * on the other hand, for the non-edge case presented in the vignette, `Re(hypergeo(...))` took 200 
+   times longer to run than `h2f1()`. See `mypars[,'elapsed_time']` in `threeway_walkthrough.R`. 
+ 
+ 2. Can we clean up even more? Especially if we're only going to keep one of the two 
+ hypergeometric implementations, F1 and F2 in the chunks above could be defined once, 
+ perhaps in the same spot where the general parameterization goes.
+
+# A third pass: the `lite3` versions
+ 
+Here's what the clean chunks might look like:
+
+ * First, we move the estimation of the hypergeometric into the general 
+ parameterization chunk.
+ * This reduces `pnbd.PAlive()` to one line, renders `pnbd.LL()` totally 
+ incomprehensible, and `pnbd.DERT()` is not much better; but the latter 
+ two do now look eerily similar, which we'll exploit later.
+
+### generalParameterizationHyper
+
+```{r generalParameterizationHyper}
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+maxab <- max(alpha, beta)
+absab <- abs(alpha - beta)
+
+param2 <- s + 1
+if (alpha < beta) {
+  param2 <- r + x
+}
+
+a <- alpha + T.cal
+b <- maxab + t.x
+c <- beta + T.cal
+d <- maxab + T.cal
+w <- r + s + x
+
+F1 <- Re(hypergeo(w, param2, w + 1, absab / b))
+F2 <- Re(hypergeo(w, param2, w + 1, absab / d))
+A0 <- F1/(b^w) - F2/(d^w)
+```
+
+### pnbd.PAlive.lite3 
+ 
+```{r pnbd.PAlive.lite3}
+return((1 + s/w * a^(w - s) * c^s * A0)^(-1))
+```
+
+### pnbd.LL.lite3
+
+```{r pnbd.LL.lite3}
+part1 <- r * log(alpha) + s * log(beta) - lgamma(r) + lgamma(r + x)
+part2 <- (s-w) * log(a) - s * log(c) 
+return(part1 + part2 + log(1+(s/w) * exp(-part2) * A0))
+```
+
+### pnbd.DERT.lite3
+
+```{r pnbd.DERT.lite3}
+part1 <- (alpha^r * beta^s/gamma(r)) * gamma(r + x)
+part2 <- 1/(a^(w - s) * c^s)
+likelihood <- part1 * (part2 + (s/w) * A0)
+```
+
+Now there's no ambiguity left: everything is defined in one place. And we can also see 
+that we can do even better, once we've made our peace with losing readability. The pieces 
+called `part1` and `part2` in `pnbd.LL()` are the log form of the pieces of the same name 
+in `pnbd.DERT()`. This is not surprising, because pnbd.LL() is supposed to return a log 
+likelihood, while pbbd.DERT() makes use of the actual likelihood. So, let's move `part1` 
+and `part2` to the general parameterization chunk, which now becomes:
+
+### generalParameterizationHyperParts
+
+```{r generalParameterizationHyperParts}
+r <- params[1]
+alpha <- params[2]
+s <- params[3]
+beta <- params[4]
+
+maxab <- max(alpha, beta)
+absab <- abs(alpha - beta)
+
+param2 <- s + 1
+if (alpha < beta) {
+  param2 <- r + x
+}
+
+a <- alpha + T.cal
+b <- maxab + t.x
+c <- beta + T.cal
+d <- maxab + T.cal
+w <- r + s + x
+
+F1 <- Re(hypergeo(w, param2, w + 1, absab / b))
+F2 <- Re(hypergeo(w, param2, w + 1, absab / d))
+A0 <- F1/(b^w) - F2/(d^w)
+part1 <- (alpha^r * beta^s/gamma(r)) * gamma(r + x)
+part2 <- 1/(a^(w - s) * c^s)
+```
+
+# One last pass: the `lite4` versions
+
+Below are the final versions of these likelihood variants. They reduce to one line each: 
+ 
+### pnbd.PAlive.lite4 (unchanged from 3 above)
+
+```{r pnbd.PAlive.lite4}
+return((1 + s/w * a^(w - s) * c^s * A0)^(-1))
+```
+ 
+### pnbd.LL.lite4
+ 
+```{r pnbd.LL.lite4}
+return(log(part1) + log(part2) + log(1 + (s/w) * A0 / part2))
+```
+
+### pnbd.DERT.lite4
+
+```{r pnbd.DERT.lite4}
+likelihood <- part1 * (part2 + (s/w) * A0)
+```
+
+One last thing: the original `pnbd.DERT()` estimates likelihood, as opposed
+to log likelihood, for no good reason at all. It uses it in log form in the 
+Tricomi function. So we will just have it call `pnbd.LL()`; that way it can 
+get directly what it actually needs -- the log likelihood.
+
+# A tentative recipe for fixing BTYD then
+
+We will stitch these things together into actual function definitions inside 
+a new `pnbd.R` and build a new package called BTYD3. Here's a way: 
+
+ 1. At the command line: `$ git submodule add git@github.com:cran/BTYD.git`. This 
+    will get you the original read-only BTYD source as a folder in your repo.
+ 2. Copy this folder to BTYD3 with `$ cp -f BTYD BTYD3`
+ 3. Edit `BTYD3/R/pnbd.R` with the new function definitions with Roxygen headers.
+ 4. Run `$ Rscript roxygenizator.R BTYD3` to build the docs from Roxygen headers 
+    for the new functions and recover the .Rd files for the old functions. This 
+    script automates the work of documenting the new package the `devtools` way, 
+    from function headers, writing the NAMESPACE file, and it will also
+ 5. Try to build BTYD3, install it from source and check it the CRAN way:
+    a) `R CMD build BTYD3`
+    b) `R CMD check BTYD3`
+ 6. Things will break. As they do, fix them by tweaking `roxygenizator.R` and 
+    running it again until 5a. gets you a tarball and 5b. shows only notes, not 
+    warnings or errors.
+ 7. Check, using `threeway_walkthrough.R`, that BTYD and BTYD3 show the same 
+    estimates for the CDNow example.
+
+## Sketching out the new functions 
+
+### BTYD3::dc.inputCheck
+
+```{r BTYD3::dc.inputCheck}
+#' Check the inputs to functions that use this common pattern
+#' 
+#' A bunch of functions whose names start with \code{pnbd} take 
+#' a set of four parameters as their first argument, and then 
+#' a set of vectors or scalars such as \code{x} or \code{T.cal}
+#' as their subsequent arguments. This function started out as
+#' pnbd.InputCheck() and it was meant to run input checks for any 
+#' number of such subsequent vector arguments, as long as they all
+#' met the same requirements as \code{x}, \code{t.x} and \code{T.cal} 
+#' in \code{\link{pnbd.LL}}: meaning, the length of the longest of 
+#' these vectors is a multiple of the lengths of all others, and all 
+#' vectors are numeric and positive. 
+#' 
+#' With an extra argument, \code{printnames}, pnbd.InputCheck()
+#' could also accommodate input checks for functions whose 
+#' names start with \code{bgbb}, \code{bgnbd}, and \code{spend} so it 
+#' was basically useful everywhere. That's when it became \code{dc.InputCheck()}. 
+#' \code{params} can have any length as long as that length is the same 
+#' as the length of \params{printnames}, so \code{dc.InputCheck()} can 
+#' probably handle mixtures of distributions for modeling BTYD behavior
+#' that are not yet implemented.
+#' 
+#' By other arguments ... here we mean a bunch of named vectors that are used
+#' by functions that call \code{dc.InputCheck}, such as x, t.x, T.cal, etc.
+#' The standard rules for vector operations apply - if they are not of the same 
+#' length, shorter vectors will be recycled (start over at the first element) until 
+#' they are as long as the longest vector. Vector recycling is a good way to get into 
+#' trouble. Keep vectors to the same length and use single values for parameters that 
+#' are to be the same for all calculations. If one of these parameters has a length 
+#' greater than one, the output will be a vector of probabilities.
+#' 
+#' @param params If used by \code{pnbd.[...]} functions, Pareto/NBD parameters -- 
+#'   a vector with r, alpha, s, and beta, in that order. See \code{\link{pnbd.LL}}. 
+#'   If used by \code{bgnbd.[...]} functions, BG/NBD parameters -- a vector with r, 
+#'   alpha, a, and b, in that order. See \code{\link{bgnbd.LL}}. If used by 
+#'   \code{bgbb.[...]} functions, BG/BB parameters -- a vector with alpha, beta, 
+#'   gamma, and delta, in that order. See \code{\link{bgbb.LL}}. 
+#'   If used by \code{spend.[...]} functions, a vector of gamma-gamma parameters -- 
+#'   p, q, and gamma, in that order. See \code{\link{spend.LL}}.
+#' @param func Function calling dc.InputCheck
+#' @param printnames a string vector with the names of parameters to pass to \code{\link{dc.check.model.params}}
+#' @param ... other arguments
+#' @return If all is well, a data frame with everything you need in it, with nrow() equal to the length of the longest vector in \code{...}
+#' @seealso \code{\link{pnbd.LL}} \code{\link{pnbd.ConditionalExpectedTransactions}}
+dc.InputCheck <- function(params, 
+                          func,
+                          printnames = c("r", "alpha", "s", "beta"), 
+                          ...) {
+    inputs <- as.list(environment())
+    vectors <- list(...)
+    dc.check.model.params(printnames = inputs$printnames, 
+                          params = inputs$params, 
+                          func = inputs$func)
+    max.length <- max(sapply(vectors, length))
+    lapply(names(vectors), function(x) {
+        if(max.length %% length(vectors[[x]])) 
+            warning(paste("Maximum vector length not a multiple of the length of", 
+                          x, sep = " "))
+        if (any(vectors[[x]] < 0) || !is.numeric(vectors[[x]])) 
+            stop(paste(x, 
+                       "must be numeric and may not contain negative numbers.", 
+                       sep = " "))
+    })
+    return(as.data.frame(lapply(vectors, 
+                                rep, 
+                                length.out = max.length)))
+}
+
+```
+ 
+### BTYD3::pnbd.generalParams
+ 
+```{r BTYD3::pnbd.generalParams}
+#' Define general parameters 
+#' 
+#' This is to ensure consistency across all functions that require the likelihood function, 
+#' or the log of it, and to make sure that the same implementation of the hypergeometric 
+#' function is used everywhere for building \code{A0}.
+#' 
+#' This function is only ever called by either \code{\link{pnbd.LL}} or \code{\link{pnbd.PAlive}} 
+#' so it returns directly the output that is expected from those calling functions: either 
+#' the log likelihood for a set of customers, or the probability that a set of customers with 
+#' characteristics given by \code{x}, \code{t.x} and \code{T.cal}, having estimated a set 
+#' of \code{params}, is still alive. Either set of customers can be of size 1.
+#' @inheritParams pnbd.LL
+#' @param func name of the function calling dc.InputCheck; either \code{pnbd.LL} or \code{pnbd.PAlive}.
+#' @return A vector of log likelihood values if \code{func} is \code{pnbd.LL}, or a vector of probabilities 
+#' that a customer is still alive if \code{func} is \code{pnbd.PAlive}.
+#' @seealso \code{\link{pnbd.LL}}
+#' @seealso \code{\link{pnbd.PAlive}}
+#' @seealso \code{\link{pnbd.DERT}}
+pnbd.generalParams <- function(params, 
+                               x, 
+                               t.x, 
+                               T.cal, 
+                               func,
+                               hardie = TRUE) {
+  # Since pnbd.LL and pnbd.pAlive are the only options
+  # for func, we don't need a printnames argument
+  # in the pnbd.generalParams wrapper.
+  stopifnot(func %in% c('pnbd.LL', 'pnbd.PAlive'))
+  inputs <- try(dc.InputCheck(params = params, 
+                                    func = func, 
+                                    printnames = c("r", "alpha", "s", "beta"),
+                                    x = x, 
+                                    t.x = t.x, 
+                                    T.cal = T.cal))
+  if('try-error' == class(inputs)) return(str(inputs)$message)
+  
+  x <- inputs$x
+  t.x <- inputs$t.x
+  T.cal <- inputs$T.cal
+  
+  r <- params[1]
+  alpha <- params[2]
+  s <- params[3]
+  beta <- params[4]
+  
+  maxab <- max(alpha, beta)
+  absab <- abs(alpha - beta)
+  
+  param2 <- s + 1
+  if (alpha < beta) {
+    param2 <- r + x
+  }
+  
+  a <- alpha + T.cal
+  b <- maxab + t.x
+  c <- beta + T.cal
+  d <- maxab + T.cal
+  w <- r + s + x
+  
+  if(hardie == TRUE) {
+    F1 <- h2f1(a = w, 
+               b = param2, 
+               c = w + 1, 
+               z = absab / b) 
+    F2 <- h2f1(a = w, 
+               b = param2, 
+               c = w + 1, 
+               z = absab / d) 
+  } else {
+    F1 <- Re(hypergeo(A = w, 
+                      B = param2, 
+                      C = w + 1, 
+                      z = absab / b))
+    F2 <- Re(hypergeo(A = w, 
+                      B = param2, 
+                      C = w + 1, 
+                      z = absab / d))
+  }
+  A0 <- F1/(b^w) - F2/(d^w)
+  
+  # You only ever call this function from two other 
+  # places: pnbd.LL or pnbd.PAlive.
+  if(func == 'pnbd.LL') {
+    # this returns the log likelihood for one random customer
+    part1 <- r * log(alpha) + 
+      s * log(beta) + 
+      lgamma(r + x) - 
+      lgamma(r)
+    part2 <- 1 / (a^(w - s) * c^s)
+    return(part1 + log(part2) + log(1 + (s/w) * A0 / part2))
+  }  
+  else if(func == 'pnbd.PAlive') {
+    # This returns the probability that a random customer is still alive
+    return(1 / (1 + s/w * a^(w - s) * c^s * A0))
+  } else {
+    return(NULL)
+  }
+}
+```
+
+### The fixed versions of the three functions we started with
+ 
+```{r BTYD3::(pnbd.LL, pnbd.PAlive, pnbd.DERT)}
+#' Pareto/NBD Log-Likelihood
+#' 
+#' Calculates the log-likelihood of the Pareto/NBD model.
+#' 
+#' @param params Pareto/NBD parameters - a vector with r, alpha, s, and beta, in that order. 
+#'   r and alpha are unobserved parameters for the NBD transaction process. s and beta are 
+#'   unobserved parameters for the Pareto (exponential gamma) dropout process.
+#' @param x number of repeat transactions in the calibration period T.cal, or a vector of transaction frequencies.
+#' @param t.x time of most recent repeat transaction, or a vector of recencies.
+#' @param T.cal length of calibration period, or a vector of calibration period lengths.
+#' @param hardie if TRUE, use \code{\link{h2f1}} instead of \code{\link[hypergeo]{hypergeo}}.
+#' 
+#' @seealso \code{\link{pnbd.EstimateParameters}}
+#' 
+#' @return A vector of log-likelihoods as long as the longest input vector (x, t.x, or T.cal).
+#' @references Fader, Peter S., and Bruce G.S. Hardie. "A Note on Deriving the Pareto/NBD Model 
+#' and Related Expressions." November. 2005. Web. \url{http://www.brucehardie.com/notes/008/}
+#' 
+#' @examples
+#' # Returns the log likelihood of the parameters for a customer who
+#' # made 3 transactions in a calibration period that ended at t=6,
+#' # with the last transaction occurring at t=4.
+#' pnbd.LL(params, x=3, t.x=4, T.cal=6, hardie = TRUE)
+#' 
+#' # We can also give vectors as function parameters:
+#' set.seed(7)
+#' x <- sample(1:4, 10, replace = TRUE)
+#' t.x <- sample(1:4, 10, replace = TRUE)
+#' T.cal <- rep(4, 10)
+#' pnbd.LL(params, x, t.x, T.cal, hardie = TRUE)
+pnbd.LL <- function(params, 
+                    x, 
+                    t.x, 
+                    T.cal, 
+                    hardie) {
+  pnbd.generalParams(params = params, 
+                     x = x, 
+                     t.x = t.x, 
+                     T.cal = T.cal, 
+                     func = 'pnbd.LL', 
+                     hardie = hardie)
+}
+
+#' Pareto/NBD P(Alive)
+#' 
+#' Uses Pareto/NBD model parameters and a customer's past transaction behavior to return the probability 
+#' that they are still alive at the end of the calibration period.
+#' 
+#' P(Alive | X=x, t.x, T.cal, r, alpha, s, beta)
+#' 
+#' x, t.x, and T.cal may be vectors. The standard rules for vector operations apply - if they are 
+#' not of the same length, shorter vectors will be recycled (start over at the first element) until 
+#' they are as long as the longest vector. It is advisable to keep vectors to the same length and to 
+#' use single values for parameters that are to be the same for all calculations. If one of these 
+#' parameters has a length greater than one, the output will be a vector of probabilities.
+#' 
+#' @inheritParams pnbd.LL
+#' 
+#' @return Probability that the customer is still alive at the end of the calibration period. 
+#' If x, t.x, and/or T.cal has a length greater than one, then this will be a vector of probabilities 
+#' (containing one element matching each element of the longest input vector).
+#' @references Fader, Peter S., and Bruce G.S. Hardie. "A Note on Deriving the Pareto/NBD Model and 
+#' Related Expressions." November. 2005. Web. \url{http://www.brucehardie.com/notes/008/}
+#' 
+#' @examples 
+#' data(cdnowSummary)
+#' cbs <- cdnowSummary$cbs
+#' params <- pnbd.EstimateParameters(cbs, hardie = TRUE)
+#' 
+#' pnbd.PAlive(params, x=0, t.x=0, T.cal=39, TRUE)
+#' # 0.2941633; P(Alive) of a customer who made no repeat transactions.
+#' 
+#' pnbd.PAlive(params, x=23, t.x=39, T.cal=39, TRUE)
+#' # 1; P(Alive) of a customer who has the same recency and total
+#' # time observed.
+#' 
+#' pnbd.PAlive(params, x=5:20, t.x=30, T.cal=39, TRUE)
+#' # Note the "increasing frequency paradox".
+#' 
+#' # To visualize the distribution of P(Alive) across customers:
+#' p.alives <- pnbd.PAlive(params, cbs[,"x"], cbs[,"t.x"], cbs[,"T.cal"], TRUE)
+#' plot(density(p.alives))
+pnbd.PAlive <- function(params, 
+                        x, 
+                        t.x, 
+                        T.cal, 
+                        hardie) {
+  pnbd.generalParams(params = params, 
+                     x = x, 
+                     t.x = t.x, 
+                     T.cal = T.cal, 
+                     func = 'pnbd.PAlive', 
+                     hardie = hardie)
+}
+
+#' Pareto/NBD Discounted Expected Residual Transactions
+#' 
+#' Calculates the discounted expected residual transactions of a customer, given their behavior during the calibration period.
+#' 
+#' DERT(d | r, alpha, s, beta, X = x, t.x, T.cal)
+#' 
+#' x, t.x, T.cal may be vectors. The standard rules for vector operations apply - if they are not of the same length, 
+#' shorter vectors will be recycled (start over at the first element) until they are as long as the longest vector. 
+#' It is advisable to keep vectors to the same length and to use single values for parameters that are to be the same 
+#' for all calculations. If one of these parameters has a length greater than one, the output will be also be a vector.
+#' 
+#' @inheritParams pnbd.LL
+#' @param d the discount rate to be used. Make sure that it matches up with your chosen time period (do not use an 
+#' annual rate for monthly data, for example).
+#' 
+#' @return The number of discounted expected residual transactions for a customer with a particular purchase pattern 
+#' during the calibration period.
+#' @references Fader, Peter S., Bruce G.S. Hardie, and Ka L. Lee. "RFM and CLV: Using Iso-Value Curves for Customer 
+#' Base Analysis." Journal of Marketing Research Vol.42, pp.415-430. November. 2005. 
+#' \url{http://www.brucehardie.com/papers.html}
+#' @references See equation 2.
+#' @references Note that this paper refers to what this package is calling discounted expected residual transactions 
+#' (DERT) simply as discounted expected transactions (DET).
+#' 
+#' @examples
+#' # elog <- dc.ReadLines(system.file("data/cdnowElog.csv", package="BTYD2"),2,3)
+#' # elog[, 'date'] <- as.Date(elog[, 'date'], format = '%Y%m%d')
+#' # cal.cbs <- dc.ElogToCbsCbt(elog)$cal$cbs
+#' # params <- pnbd.EstimateParameters(cal.cbs, hardie = TRUE)
+#' params <- c(0.5629966, 12.5590370, 0.4081095, 10.5148048)
+#' 
+#' # 15% compounded annually has been converted to 0.0027 compounded continuously,
+#' # as we are dealing with weekly data and not annual data.
+#' d <- 0.0027
+#' 
+#' # calculate the discounted expected residual transactions of a customer
+#' # who made 7 transactions in a calibration period that was 77.86
+#' # weeks long, with the last transaction occurring at the end of
+#' # the 35th week.
+#' pnbd.DERT(params, x=7, t.x=35, T.cal=77.86, d, TRUE)
+#' 
+#' # We can also use vectors to compute DERT for several customers:
+#' pnbd.DERT(params, x=1:10, t.x = 30, T.cal=77.86, d, TRUE)
+pnbd.DERT <- function(params, 
+                      x, 
+                      t.x, 
+                      T.cal, 
+                      d, 
+                      hardie) {
+  loglike <- try(pnbd.LL(params, 
+                         x, 
+                         t.x, 
+                         T.cal, 
+                         hardie))
+  if('try-error' %in% class(loglike)) return(loglike)
+  
+  # This is the remainder of the original pnbd.DERT function def. 
+  # No need to get too clever here. Revert to explicit assignment 
+  # of params to r, alpha, s, beta the old-school way.
+  r <- params[1]
+  alpha <- params[2]
+  s <- params[3]
+  beta <- params[4]
+  z <- d * (beta + T.cal)
+  
+  tricomi.part.1 = ((z)^(1 - s))/(s - 1) * 
+    genhypergeo(U = c(1), 
+                L = c(2 - s), 
+                z = z, 
+                check_mod = FALSE)
+  
+  tricomi.part.2 = gamma(1 - s) * 
+    genhypergeo(U = c(s), 
+                L = c(s), 
+                z = z, 
+                check_mod = FALSE)
+  
+  tricomi = tricomi.part.1 + tricomi.part.2
+  
+  result <- exp(r * log(alpha) + 
+                  s * log(beta) + 
+                  (s - 1) * log(d) + 
+                  lgamma(r + x + 1) + 
+                  log(tricomi) - 
+                  lgamma(r) - 
+                  (r + x + 1) * log(alpha + T.cal) - 
+                  loglike)
+  return(result)
+}
+```
+
+If fixing what's wrong with the BTYD were the only goal, we'd be done now. 
+But we also want to explore some extensions, as follows:
+
+ - if `h2f1` works faster than `hypergeo`, and produces the same result as `Re(hypergeo(...))`, then 
+ let's preserve the option of using it; but if we're going to allow switching between hypergeometric 
+ recipes, that requires that we fiddle with a few more functions, among them `pnbd.pmf.General()`.
+ - the original library uses `stats::optim()` with the `L-BFGS-B` method; the autor of `optim`, John C. Nash, 
+ [now thinks](http://www.ibm.com/developerworks/library/ba-optimR-john-nash/) that the newer `optimx::optimx()` 
+ is a better choice; we'll use that one and while we're at it we might as well add the ability to select our 
+ own method from among the many available options, maybe compare results.
+ - we may want confidence intervals, so we may need the Hessian; now we can get it by setting the `hessian` argument to `TRUE` in the call to `pnbd.EstimateParameters()`.
+ 
+# The actual recipe
+
+ 1. The three functions we just fixed above are called by diagnostic plot functions, so those need to be fixed too: they have to accommodate the `hardie` parameter, and if we're going to mess with their definitions too, we might as well handle all input checks in one place.
+
+ 2. There's also a `pnbd.pmf.General()` function that needs the `hardie` parameter and in addition 
+ it has a really awkward way of calling the hypergeometric for components B1 and B2 in the original 
+ equation: it's verbose without any benefit in legibility, and code repeats itself. We'll define a 
+ helper function called `B1B2` that sets things up in a more uniform way instead.
+ 
+ 3. Any functions that we make material changes to -- as in they take new parameters -- will need 
+ to have comment headers that can be roxygenized. These headers will replace the corresponding .Rd 
+ files when you call `devtools::document()`, but that function also deletes any .Rd files that do 
+ not have a corresponding header. We need a script that recovers them. That script is `roxygenizator.R`.
+ 
+ 4. To see what changed and how, the quickest thing to do might be to diff the .Rd files generated by Roxygen2 from the headers in the functions defined  in `R/pnbd.R` of the `BTYD3` source folder against their counterparts in the original `BTYD` source folder. This might be done in Vim.
+
+## Prep work
+
+Clone the read-only mirror of BTYD from [GitHub](https://github.com/cran/BTYD) into a 
+sub-folder of the same name via `$ git submodule add git@github.com:cran/BTYD.git`. 
+You will need some pieces of it. For now, copy its `NAMESPACE` file into the root of 
+``r params$repo`` and add the line `import(optimx)`.
+
+## Stuff that will go wrong
+
+When you simply `git clone` a complete package source, such as BTYD, and try to rejigger it 
+under some other name, such as BTYD3, and then build it with help from `devtools`, you'll have 
+to fix some things by hand. 
+
+First, terms: there's a _source_ folder structure BTYD3 that sits wherever you cloned it; 
+let's pretend that it is a subfolder of ``r params$repo``. 
+
+Then there's also a _library_ folder structure BTYD3 that will show up in `.libPaths()` when, 
+after you run `R CMD build BTYD3` and get a tarball in the home folder of the _source_ structure, 
+you actually install that built package, as in 
+`install.packages("~/Documents/patch_btyd/BTYD3_2.4.tar.gz", repos = NULL, type = "source")`. 
+
+The stuff you need to fiddle with by hand is in the _source_ folder structure. If all goes well, 
+you won't have to pay any attention to the _library_ folder structure with the same name. They're 
+in two different places. They will be hard to mix up.
+
+The reason I'm mentioning both is that when you run `R CMD check BTYD3` there will be some 
+notes, warnings, or errors. Some of these errors or warnings reference the _library_ folder: 
+they mention files that should be there but are missing because some parts of the 
+build failed. Others reference the _source_ folder: they mention files that should't be 
+there, but they are, because your operating system or the way the vignette .Rnw file 
+file was compiled produced some detritus. An example of OS detritus on the Mac is a sprinkling 
+of .DS_Store files; an example of vignette detritus is a "figure" subfolder that knitr uses for 
+temporary storage. 
+
+Anyway, back to the stuff you'll have to fix by hand:
+
+ - find BTYD and replace it with BTYD3 in the bodies of the following files
+     - `DESCRIPTION`
+     - `vignettes/BTYD-walkthrough.Rnw` 
+     - change the name of `BTYD-walkthrough.Rnw` to `BTYD3-walkthrough.Rnw`
+     - open it in RStudio and change line 6 like so, to make URL hyperlinks blue:
+     `\hypersetup{colorlinks, citecolor=black, linkcolor=black, urlcolor=blue}`
+ - erase `man/BTYD-package.Rd` entirely
+ - rename `R/BTYD.R` to `R/BTYD3.R`
+ - check that in the source folder "vignettes" there's a "figure" sub-folder; mkdir it if 
+   it's not there; it will be needed in the build process for temporary storage of pictures 
+   that go in the pdf vignette in the library doc folder; if it's there and it's not empty, 
+   delete everything inside it.
+ - set up `man/[...].Rd` files for any new functions you have defined by writing roxygen2 
+   headers for them properly as shown in the examples above and [here](http://r-pkgs.had.co.nz/man.html).
+ - at the command line, run `Rscript roxygenizator.R BTYD3`; this does a few things as listed below:
+     - it will call `devtools::document()` which
+     will build new .Rd files from your new function headers, and obliterate a bunch of 
+     others. This script reverses the damage by recovering them from the BTYD clone. But
+     you're not out of the woods yet. Some of those .Rd files will have `\examples{}` 
+     sections that make calls to the `system.file()` command with the argument
+     `package = "BTYD"`. All of those examples will fail in `R CMD check BTYD3` so 
+     these `package = "BTYD"` references must be changed to `package = "BTYD3"`
+     in all of the .Rd files where they appear. The painstaking approach is to go 
+     through them by hand one by one until `R CMD check BTYD3` no longer throws 
+     errors. Make a note of each file fixed. As of this writing: `dc.ReadLines.Rd`, 
+     `dc.BuildCBSFromCBTAndDates.Rd`, `dc.CreateFreqCBT.Rd`, `dc.CreateReachCBT.Rd`, 
+     `dc.CreateSpendCBT.Rd`, `dc.ElogToCbsCbt.Rd`, `dc.MakeRFmatrixCal.Rd`, 
+     `dc.MergeCustomers.Rd` and `dc.RemoveTimeBetween.Rd`. Then you can add code
+     to `roxygenizator.R` to do this work automatically. See the `changeThis()` helper
+     defined at the top of the file and the `map()` calls to it toward the end. Do not 
+     run `changeThis()` over the entire `dir()` on the theory that where there's nothing 
+     to replace you will just get the original `.Rd` file. This function will change `BTYD2` 
+     to `BTYD22` if you let it, and then your examples will be broken all over again. 
+     Do eliminate from among the 9 .Rd file names mentioned above any file names for 
+     which you wrote a Roxygen header. Eventually, you will write a Roxygen header for 
+     all of the function and the `changeThis()` gymnastics will no longer be needed. When
+     that is done, comment out the block of code that calls `map(changeThis)` over the vector 
+     of nine .Rd file names listed above. Comment out, rather than delete, so this documentation
+     still makes sense to you. If you ever have to restart from scratch, un-comment.
+     - `roxygenizator.R` also writes a brand new `man/BTYD3-package.Rd` out of `R/BTYD3.R`
+     - `devtools` will produce a useless `NAMESPACE` file consisting of a single line 
+     that warns you that it was built with `roxygen2` and it is not to be edited by hand; 
+     `roxygenizator.R` fixes that by overwriting this `NAMESPACE` file with the one from 
+     the BTYD clone that you copied into the root of `patch_btyd` and to which you 
+     added the extra line; if down the road your BTYD3 package will list other dependencies 
+     in its `DESCRIPTION` file, add another `import()` line to this `NAMESPACE`; or, read 
+     the `R CMD check BTYD3` warnings; at some point they will suggest which `importFrom()` 
+     lines should be added to `NAMESPACE` so just copy them from there.
+     - build the package on the command line with `R CMD build BTYD3` 
+     - this will populate a data folder in the _library_ folder structure (find it in `.libPaths()`) 
+     - that data folder has some csv.gz files in it; `roxygenizator.R` will `gunzip` them. 
+     - check the package on the command line once again with `R CMD check BTYD3`; it should only 
+     bring up notes and warnings, no errors 
+     - if that is so, `roxygenizator.R` will `install.packages(..., repos = NULL, type = "source")` 
+     from the source tarball that was just built and checked.
+
+You can also choose to compile the vignette to pdf by hand, in the _source_ structure, once you have 
+the package built and installed. To do that you'll want to make sure that the files in the _source_ 
+data folder are csv, not csv.gz, and that the vignettes/figure folder is empty.
+ 
+# BTYD2 vs. BTYD3
+
+I attempted an earlier fix and called it BTYD2. That fix was wrong, but
+I thought it might have useful pieces, so I had to call my next attempt BTYD3. 
+Now I know that BTYD3 works, so I might as well fix BTYD2 too. The steps:
+
+ - at the command line, `cp -Rf BTYD3 BTYD2`
+ - find BTYD3 and replace it with BTYD2 in the bodies of the following files
+ - `DESCRIPTION`
+ - `R/dc.R`
+ - `vignettes/BTYD3-walkthrough.Rnw` (and change its name)
+ - erase `man/BTYD3-package.Rd` entirely
+ - rename `R/BTYD3.R` to `R/BTYD2.R`
+ - at the command line run `Rscript roxygenizator.R BTYD2`. It will rebuild the docs and change 
+ references to `package = "BTYD2"` in all of the .Rd files where `package = "BTYD"` appears. 
+ - at the command line run `R CMD build BTYD2`, `R CMD check BTYD2`
+ - install all three packages from source: BTYD [from CRAN](https://cran.r-project.org/web/packages/BTYD/index.html), 
+ BTYD2 and BTYD3 from the tarballs created with `R CMD build`.
+ - check that the two produce the same results as the BTYD package from CRAN by running `threeway_walkthrough.R`.
+ - for this to work, you may need to `brew install gsl` at the command line; update Homebrew first as shown [here](https://docs.brew.sh/FAQ).
+ 
+Once all of this works, BTYD3 can go away, and my patched version of the BTYD package will be called BTYD2. At that point I will erase the BTYD3 folder, and edit `threeway_walkthrough.R` so it makes no mention of it. Now three-way stands for 
+  1. the original BTYD from CRAN, 
+  2. my own BTYD2 and 
+  3. my BTYD2 with `hypergeo` instead of `h2f1`. 
+Success means that (1) and (2) return the same numbers for the CD-NOW set and (2) is not much slower, while (3) might return slightly different numbers (not by much) and we'll see how much slower it is.

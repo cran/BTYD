@@ -1,4 +1,17 @@
-exportPattern("^[[:alpha:]]+")
-exportPattern("^[^\\.]")
-importFrom(hypergeo, hypergeo, genhypergeo)
-import(Matrix)
+exportPattern("^dc\\.")
+exportPattern("^pnbd\\.")
+exportPattern("^bgnbd\\.")
+exportPattern("^bgbb\\.")
+exportPattern("^spend\\.")
+export("h2f1")
+import("Matrix")
+import("optimx")
+import("dplyr")
+importFrom("hypergeo", "hypergeo", "genhypergeo")
+importFrom("grDevices", "dev.new", "gray")
+importFrom("graphics", "abline", "axis", "barplot", "contour",
+           "legend", "lines", "mtext", "par", "persp", "plot", "title")
+importFrom("stats", "aggregate", "dbeta", "density", "dgamma",
+           "heatmap", "optim", "qbeta", "qgamma", "smooth.spline",
+           "xtabs")
+importFrom("utils", "str", "combn", "flush.console")

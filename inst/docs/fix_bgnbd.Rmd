@@ -1,0 +1,414 @@
+---
+title: "BTYD BG/NBD likelihood rework"
+author: "Gabi Huiber"
+date: "September 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+# Problem statement
+
+See `fix_pnbd.Rmd` (or, for a more pleasant reading experience, `fix_pnbd.html`) for a summary of how I changed the original `R/pnbd.R` script in the BTYD package for the purposes of the BTYD3 package. The BG/NBD set of functions, defined in `R/bgnbd.R`, suffer from the same kind of code duplication as the original, so tidying-up is in order. But, more substantively, the BG/NBD implementation could also benefit from the three improvements listed below:
+
+  * The original BG/NBD implementation can fail like its Pareto/NBD counterpart in the presence of large values of x -- meaning, for customers with rich purchase histories. The fix is explained [in this note](http://www.brucehardie.com/notes/027/bgnbd_num_error.pdf) but the definition of `bgnbd.LL()` in the original `R/bgnbd.R` script, though written a year after this note was published, does not implement this fix. This one does.
+  * Like the BTYD3 version of `R/pnbd.R`, BG/NBD now also uses the newer `optimx::optimx()` instead of `base::optim()` because there are more choices of optimization methods, a richer output, and this is also the guidance of the author, [here](http://www.ibm.com/developerworks/library/ba-optimR-john-nash/).
+  * Since BG/NBD also requires the Gaussian hypergeometric function for computing expectations of transaction counts, it now also allows a `hardie` TRUE/FALSE flag where appropriate, so that the user is given the choice of using either `h2f1` or the `hypergeo` package as appropriate. The trade-offs are explained in `fix_pnbd.Rmd`. NB: though the original `R/bgnbd.R` calls `library(hypergeo)` on line 3, it never uses it. Instead, it uses `h2f1` everywhere. This fixes that.
+
+# What do the original implementations look like?
+
+## bgnbd.LL (lines 35-75 of [bgnbd.R](https://github.com/cran/BTYD/blob/master/R/bgnbd.R))
+
+```{r bgnbd.LL}
+bgnbd.LL <- function(params, x, t.x, T.cal) {
+    
+    beta.ratio = function(a, b, x, y) {
+        exp(lgamma(a) + lgamma(b) - lgamma(a + b) - lgamma(x) - lgamma(y) + lgamma(x + 
+            y))
+    }
+    
+    max.length <- max(length(x), length(t.x), length(T.cal))
+    
+    if (max.length%%length(x)) 
+        warning("Maximum vector length not a multiple of the length of x")
+    if (max.length%%length(t.x)) 
+        warning("Maximum vector length not a multiple of the length of t.x")
+    if (max.length%%length(T.cal)) 
+        warning("Maximum vector length not a multiple of the length of T.cal")
+    
+    dc.check.model.params(c("r", "alpha", "a", "b"), params, "bgnbd.LL")
+    
+    if (any(x < 0) || !is.numeric(x)) 
+        stop("x must be numeric and may not contain negative numbers.")
+    if (any(t.x < 0) || !is.numeric(t.x)) 
+        stop("t.x must be numeric and may not contain negative numbers.")
+    if (any(T.cal < 0) || !is.numeric(T.cal)) 
+        stop("T.cal must be numeric and may not contain negative numbers.")
+    
+    r = params[1]
+    alpha = params[2]
+    a = params[3]
+    b = params[4]
+    
+    x <- rep(x, length.out = max.length)
+    t.x <- rep(t.x, length.out = max.length)
+    T.cal <- rep(T.cal, length.out = max.length)
+    
+    A = r * log(alpha) + lgamma(r + x) - lgamma(r) - (r + x) * log(alpha + t.x)
+    B = beta.ratio(a, b + x, a, b) * ((alpha + t.x)/(alpha + T.cal))^(r + x) + as.numeric((x > 
+        0)) * beta.ratio(a + 1, b + x - 1, a, b)
+    LL = sum(A + log(B))
+    
+    return(LL)
+}
+```
+
+## bgnbd.PAlive (lines 255-285 of [bgnbd.R](https://github.com/cran/BTYD/blob/master/R/bgnbd.R))
+
+```{r bgnbd.PAlive}
+bgnbd.PAlive <- function(params, x, t.x, T.cal) {
+    
+    max.length <- max(length(x), length(t.x), length(T.cal))
+    
+    if (max.length%%length(x)) 
+        warning("Maximum vector length not a multiple of the length of x")
+    if (max.length%%length(t.x)) 
+        warning("Maximum vector length not a multiple of the length of t.x")
+    if (max.length%%length(T.cal)) 
+        warning("Maximum vector length not a multiple of the length of T.cal")
+    
+    dc.check.model.params(c("r", "alpha", "a", "b"), params, "bgnbd.PAlive")
+    
+    if (any(x < 0) || !is.numeric(x)) 
+        stop("x must be numeric and may not contain negative numbers.")
+    if (any(t.x < 0) || !is.numeric(t.x)) 
+        stop("t.x must be numeric and may not contain negative numbers.")
+    if (any(T.cal < 0) || !is.numeric(T.cal)) 
+        stop("T.cal must be numeric and may not contain negative numbers.")
+    
+    x <- rep(x, length.out = max.length)
+    t.x <- rep(t.x, length.out = max.length)
+    T.cal <- rep(T.cal, length.out = max.length)
+    
+    r = params[1]
+    alpha = params[2]
+    a = params[3]
+    b = params[4]
+    term1 = (a/(b + x - 1)) * ((alpha + T.cal)/(alpha + t.x))^(r + x)
+    return(1/(1 + as.numeric(x > 0) * term1))
+}
+```
+
+They duplicate their input checks. We could move these checks somewhere else, in a stand-alone function. We could make this function even more useful by noticing that we don't care about the names of the vectors called as arguments after `params`, just that they're of an acceptable length and have no negative elements. We also don't care about how many of them there are as long as they all must meet the same requirements. Here's one way:
+
+## Universal input checks
+
+```{r inputCheck}
+bgnbd.InputCheck <- function(params, myfun, ...) {
+  inputs <- as.list(environment())
+  vectors <- list(...)
+  vectors <- vectors[!sapply(vectors, is.null)]
+  dc.check.model.params(c("r", "alpha", "a", "b"), inputs$params, inputs$myfun)
+  max.length <- max(sapply(vectors, length))
+  lapply(names(vectors), function(x) {
+    if(max.length %% length(vectors[[x]])) 
+      warning(paste("Maximum vector length not a multiple of the length of", 
+                    x, sep = " "))
+    if (any(vectors[[x]] < 0) || !is.numeric(vectors[[x]])) 
+      stop(paste(x, 
+                 "must be numeric and may not contain negative numbers.", 
+                 sep = " "))
+  })
+  return(max.length)
+}
+```
+
+Now the two functions above become:
+
+## bgnbd.LL.lite
+
+```{r bgnbd.LL.lite}
+bgnbd.LL <- function(params, x, t.x, T.cal) {
+  max.length <- try(bgnbd.InputCheck(params, 'bgnbd.LL', x, t.x, T.cal))
+  if('try-error' == class(max.length)) return(max.length)
+  
+  x <- rep(x, length.out = max.length)
+  t.x <- rep(t.x, length.out = max.length)
+  T.cal <- rep(T.cal, length.out = max.length)
+    
+    r = params[1]
+    alpha = params[2]
+    a = params[3]
+    b = params[4]
+    
+    beta.ratio = function(a, b, x, y) {
+        exp(lgamma(a) + lgamma(b) - lgamma(a + b) - lgamma(x) - lgamma(y) + lgamma(x + 
+            y))
+    }
+    
+    A = r * log(alpha) + lgamma(r + x) - lgamma(r) - (r + x) * log(alpha + t.x)
+    B = beta.ratio(a, b + x, a, b) * ((alpha + t.x)/(alpha + T.cal))^(r + x) + as.numeric((x > 
+        0)) * beta.ratio(a + 1, b + x - 1, a, b)
+    LL = sum(A + log(B))
+    
+    return(LL)
+}
+```
+
+## bgnbd.PAlive.lite
+
+```{r bgnbd.PAlive.lite}
+bgnbd.PAlive <- function(params, x, t.x, T.cal) {
+  max.length <- try(bgnbd.InputCheck(params, 'bgnbd.PAlive', x, t.x, T.cal))
+  if('try-error' == class(max.length)) return(max.length)
+  
+  x <- rep(x, length.out = max.length)
+  t.x <- rep(t.x, length.out = max.length)
+  T.cal <- rep(T.cal, length.out = max.length)
+    
+    r = params[1]
+    alpha = params[2]
+    a = params[3]
+    b = params[4]
+    
+    term1 = (a/(b + x - 1)) * ((alpha + T.cal)/(alpha + t.x))^(r + x)
+    return(1/(1 + as.numeric(x > 0) * term1))
+}
+```
+
+We can do a little better. The function definitions above still have some duplication. In fact, they take the same arguments and just combine them in different ways to return the output of interest. First, let's implement the large x fix in this version of `bgnbd.LL`:
+
+## bgnbd.LL.lite with NUM! fix
+
+```{r bgnbd.LL.lite.numfix}
+bgnbd.LL <- function(params, x, t.x, T.cal) {
+  max.length <- try(bgnbd.InputCheck(params, 'bgnbd.LL', x, t.x, T.cal))
+  if('try-error' == class(max.length)) return(max.length)
+  
+  x <- rep(x, length.out = max.length)
+  t.x <- rep(t.x, length.out = max.length)
+  T.cal <- rep(T.cal, length.out = max.length)
+    
+  r = params[1]
+  alpha = params[2]
+  a = params[3]
+  b = params[4]
+    
+  # alt specification to handle large values of x (Solution #2 
+  # in http://brucehardie.com/notes/027/bgnbd_num_error.pdf)
+  lb.ratio = function(a, b, x, y) {
+    (lgamma(a) + lgamma(b) - lgamma(a + b)) - 
+    (lgamma(x) + lgamma(y) - lgamma(x + y))
+  }
+    
+  D1 = lb.ratio(a + b, b + x, r, b)
+  D2 = r * log(alpha) - (r + x) * log(alpha + t.x)
+  C3 = ((alpha + t.x)/(alpha + T.cal))^(r + x)
+  C4 = a / (b + x - 1)
+  LL = D1 + D2 + log(C3 + as.numeric((x > 0)) * C4)
+    
+  return(LL)
+}
+```
+
+Notice that in this alternative specification the ratio `C4/C3` would produce term1 in the definition of `bgnbd.PAlive()`. It would be good if we could compute them once, use everywhere. 
+It would also be good if you didn't do more computing than strictly needed. Maybe we could do this:
+
+## bgnbd.GeneralParams
+
+```{r bgnbd.GeneralParams}
+bgnbd.generalParams <- function(params, 
+                                func,
+                                x, 
+                                t.x, 
+                                T.cal, 
+                                T.star = NULL, 
+                                hardie = NULL) {
+  max.length <- try(pnbd.InputCheck(params = params, 
+                                    func = func, 
+                                    printnames = c("r", "alpha", "a", "b"),
+                                    x, 
+                                    t.x, 
+                                    T.cal))
+  if('try-error' == class(max.length)) return(max.length)
+  
+  x <- rep(x, length.out = max.length)
+  t.x <- rep(t.x, length.out = max.length)
+  T.cal <- rep(T.cal, length.out = max.length)
+  
+  r <- params[1]
+  alpha <- params[2]
+  a <- params[3]
+  b <- params[4]
+  
+  # last two components for the alt specification
+  # to handle large values of x (Solution #2 in
+  # http://brucehardie.com/notes/027/bgnbd_num_error.pdf, 
+  # LL specification (4) on page 4):
+  C3 = ((alpha + t.x)/(alpha + T.cal))^(r + x)
+  C4 = a / (b + x - 1)
+  
+  # stuff you'll need in sundry places
+  out <- list()
+  out$PAlive <- 1/(1 + as.numeric(x > 0) * C4 / C3)
+  
+  # do these computations only if needed: that is,
+  # if you call this function from bgnbd.LL
+  if(func == 'bgnbd.LL') {
+    
+    # a helper for specifying the log form of the ratio of betas
+    # in http://brucehardie.com/notes/027/bgnbd_num_error.pdf
+    lb.ratio = function(a, b, x, y) {
+      (lgamma(a) + lgamma(b) - lgamma(a + b)) - 
+        (lgamma(x) + lgamma(y) - lgamma(x + y))
+    }
+    
+    # First two components -- D1 and D2 -- for the alt spec
+    # that can handle large values of x (Solution #2 in
+    # http://brucehardie.com/notes/027/bgnbd_num_error.pdf)
+    # Here is the D1 term of LL function (4) on page 4:
+    D1 = lgamma(r + x) - 
+         lgamma(r) + 
+         lgamma(a + b) + 
+         lgamma(b + x) - 
+         lgamma(b) - 
+         lgamma(a + b + x)
+    D2 = r * log(alpha) - (r + x) * log(alpha + t.x)
+    
+    # original implementation of the log likelihood
+    # A = D2 + lgamma(r + x) - lgamma(r)
+    # B = exp(lb.ratio(a, b + x, a, b)) * 
+    #   C3 + 
+    #   as.numeric((x > 0)) * 
+    #   exp(lb.ratio(a + 1, b + x - 1, a, b))
+    # out$LL = sum(A + log(B))
+    
+    # with the corection for avoiding the NUM! problem: 
+    out$LL = D1 + D2 + log(C3 + as.numeric((x > 0)) * C4)
+  }
+  
+  # if T.star is not null, then this can produce 
+  # conditional expected transactions too. this is 
+  # another way of saying that you are calling this
+  # function from bgnbd.ConditionalExpectedTransactions, 
+  # in which case you also need to set hardie to TRUE or FALSE
+  if(!is.null(T.star)) {
+    stopifnot(hardie %in% c(TRUE, FALSE))
+    term1 <- (a + b + x - 1) / (a - 1)
+    if(hardie == TRUE) {
+      hyper <- h2f1(r + x, 
+                    b + x, 
+                    a + b + x - 1, 
+                    T.star/(alpha + T.cal + T.star))
+    } else {
+      hyper <- Re(hypergeo(r + x, 
+                           b + x, 
+                           a + b + x - 1, 
+                           T.star/(alpha + T.cal + T.star)))
+    }
+    term2 <- 1 - 
+      ((alpha + T.cal)/(alpha + T.cal + T.star))^(r + x) * 
+      hyper
+    out$CET <- term1 * term2 * out$PAlive
+  }
+  out
+}
+```
+
+Notice that we didn't even use the proposed `bgnbd.InputCheck()` because the `pnbd.InputCheck()` we already defined for the Pareto/NBD (`R/pnbd.R`) functions works fine. We just need to set its `printnames` argument to suit the BG/NBD functions.
+
+With this helper, `bgnbd.LL()` and `bgnbd.PAlive()` become one-line wrappers:
+
+## One-liner `bgnbd.LL()`, `bgnbd.PAlive()`
+
+```{r oneliners}
+bgnbd.LL <- function(params, x, t.x, T.cal) {
+  bgnbd.generalParams(params, 'bgnbd.LL', x, t.x, T.cal)$LL
+}
+bgnbd.PAlive <- function(params, x, t.x, T.cal) {
+  bgnbd.generalParams(params, 'bgnbd.PAlive', x, t.x, T.cal)$PAlive
+}
+```
+
+There's a third BG/NBD function that could benefit, shown below:
+
+## bgnbd.ConditionalExpectedTransactions (lines 196-253 of [bgnbd.R](https://github.com/cran/BTYD/blob/master/R/bgnbd.R))
+
+```{r bgnbd.ConditionalExpectedTransactions}
+bgnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) {
+    
+    h2f1 <- function(a, b, c, z) {
+        lenz <- length(z)
+        j = 0
+        uj <- 1:lenz
+        uj <- uj/uj
+        y <- uj
+        lteps <- 0
+        
+        while (lteps < lenz) {
+            lasty <- y
+            j <- j + 1
+            uj <- uj * (a + j - 1) * (b + j - 1)/(c + j - 1) * z/j
+            y <- y + uj
+            lteps <- sum(y == lasty)
+        }
+        return(y)
+    }
+    
+    max.length <- max(length(T.star), length(x), length(t.x), length(T.cal))
+    
+    if (max.length%%length(T.star)) 
+        warning("Maximum vector length not a multiple of the length of T.star")
+    if (max.length%%length(x)) 
+        warning("Maximum vector length not a multiple of the length of x")
+    if (max.length%%length(t.x)) 
+        warning("Maximum vector length not a multiple of the length of t.x")
+    if (max.length%%length(T.cal)) 
+        warning("Maximum vector length not a multiple of the length of T.cal")
+    
+    dc.check.model.params(c("r", "alpha", "a", "b"), params, "bgnbd.ConditionalExpectedTransactions")
+    
+    if (any(T.star < 0) || !is.numeric(T.star)) 
+        stop("T.star must be numeric and may not contain negative numbers.")
+    if (any(x < 0) || !is.numeric(x)) 
+        stop("x must be numeric and may not contain negative numbers.")
+    if (any(t.x < 0) || !is.numeric(t.x)) 
+        stop("t.x must be numeric and may not contain negative numbers.")
+    if (any(T.cal < 0) || !is.numeric(T.cal)) 
+        stop("T.cal must be numeric and may not contain negative numbers.")
+    
+    x <- rep(x, length.out = max.length)
+    t.x <- rep(t.x, length.out = max.length)
+    T.cal <- rep(T.cal, length.out = max.length)
+    
+    r = params[1]
+    alpha = params[2]
+    a = params[3]
+    b = params[4]
+    term1 <- ((a + b + x - 1)/(a - 1))
+    term2 <- 1 - ((alpha + T.cal)/(alpha + T.cal + T.star))^(r + x) * h2f1(r + x, 
+        b + x, a + b + x - 1, T.star/(alpha + T.cal + T.star))
+    term3 <- 1 + as.numeric(x > 0) * (a/(b + x - 1)) * ((alpha + T.cal)/(alpha + 
+        t.x))^(r + x)
+    out <- term1 * term2/term3
+    return(out)
+}
+```
+
+For one thing, we already have a h2f1 stand-alone definition in `pnbd.R` and the rest of the bits and bobs can be returned by `bgnbd.generalParams()`. The lite version would be another one-liner:
+
+## bgnbd.ConditionalExpectedTransactions.lite
+
+```{r bgnbd.ConditionalExpectedTransactions.lite}
+bgnbd.ConditionalExpectedTransactions <- function(params, T.star, x, t.x, T.cal) {
+ bgnbd.generalParams(params, 
+                     'bgnbd.ConditionalExpectedTransactions', 
+                     x, 
+                     t.x, 
+                     T.cal, 
+                     T.star)$CET
+}
+```
+
