@@ -4,7 +4,14 @@
 \alias{pnbd.ConditionalExpectedTransactions}
 \title{Pareto/NBD Conditional Expected Transactions}
 \usage{
-pnbd.ConditionalExpectedTransactions(params, T.star, x, t.x, T.cal, hardie)
+pnbd.ConditionalExpectedTransactions(
+  params,
+  T.star,
+  x,
+  t.x,
+  T.cal,
+  hardie = TRUE
+)
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

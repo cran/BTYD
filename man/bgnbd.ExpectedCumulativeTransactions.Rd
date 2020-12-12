@@ -9,7 +9,7 @@ bgnbd.ExpectedCumulativeTransactions(
   T.cal,
   T.tot,
   n.periods.final,
-  hardie
+  hardie = TRUE
 )
 }
 \arguments{

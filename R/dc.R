@@ -1359,7 +1359,7 @@ dc.PlotLogLikelihoodContours <- function(loglikelihood.fcn,
 #' @param predicted.params  estimated parameters.
 #' @param ...   all additional arguments required by the log-likelihood
 #'   function. For example, [`bgbb.rf.matrix.LL`] requires rf.matrix;
-#'   [`pnbd.cbs.LL`] requires cal.cbs and hardie; and [`bgnbd.cbs.LL`] requires
+#'   [`pnbd.cbs.LL`] requires cal.cbs and hardie (defaults to TRUE); and [`bgnbd.cbs.LL`] requires
 #'   cal.cbs.
 #' @param n.divs 	integer representing how fine-grained the contour plot is. A
 #'   higher value will produce a higher resolution plot with smoother contour
@@ -1529,8 +1529,9 @@ dc.PlotLogLikelihoodContour <- function(loglikelihood.fcn,
         "and", param.names.vary[2])
     abline(v = values.par.vary[1], h = values.par.vary[2], col = "red")
     
-    title(main = contour.plot.main.label, xlab = param.names.vary[1], ylab = param.names.vary[2])
-    
+    title(main = contour.plot.main.label, 
+          xlab = param.names.vary[1], 
+          ylab = param.names.vary[2])
 }
 
 #' Read Lines

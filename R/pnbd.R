@@ -180,7 +180,7 @@ pnbd.LL <- function(params,
                     x, 
                     t.x, 
                     T.cal, 
-                    hardie) {
+                    hardie = TRUE) {
   pnbd.generalParams(params = params, 
                      x = x, 
                      t.x = t.x, 
@@ -237,7 +237,7 @@ pnbd.PAlive <- function(params,
                         x, 
                         t.x, 
                         T.cal, 
-                        hardie) {
+                        hardie = TRUE) {
   pnbd.generalParams(params = params, 
                      x = x, 
                      t.x = t.x, 
@@ -311,12 +311,12 @@ pnbd.DERT <- function(params,
                       t.x, 
                       T.cal, 
                       d, 
-                      hardie) {
-  loglike <- try(pnbd.LL(params, 
-                         x, 
-                         t.x, 
-                         T.cal, 
-                         hardie))
+                      hardie = TRUE) {
+  loglike <- try(pnbd.LL(params = params, 
+                         x = x, 
+                         t.x = t.x, 
+                         T.cal = T.cal, 
+                         hardie = hardie))
   if('try-error' %in% class(loglike)) return(loglike)
   
   # This is the remainder of the original pnbd.DERT function def. 
@@ -387,7 +387,9 @@ pnbd.DERT <- function(params,
 #' # compare the speed and results to the following:
 #' cal.cbs.compressed <- dc.compress.cbs(cal.cbs)
 #' pnbd.cbs.LL (params, cal.cbs.compressed, TRUE)
-pnbd.cbs.LL <- function(params, cal.cbs, hardie) {
+pnbd.cbs.LL <- function(params, 
+                        cal.cbs, 
+                        hardie = TRUE) {
   dc.check.model.params(printnames = c("r", "alpha", "s", "beta"), 
                         params = params, 
                         func = "pnbd.cbs.LL")
@@ -493,7 +495,7 @@ pnbd.EstimateParameters <- function(cal.cbs,
                                     par.start = c(1, 1, 1, 1), 
                                     max.param.value = 10000, 
                                     method = 'L-BFGS-B', 
-                                    hardie, 
+                                    hardie = TRUE, 
                                     hessian = FALSE) {
     dc.check.model.params(printnames = c("r", "alpha", "s", "beta"), 
                           params = par.start, 
@@ -503,7 +505,9 @@ pnbd.EstimateParameters <- function(cal.cbs,
     pnbd.eLL <- function(params, cal.cbs, hardie) {
         params <- exp(params)
         params[params > max.param.value] <- max.param.value
-        return(-1 * pnbd.cbs.LL(params, cal.cbs, hardie))
+        return(-1 * pnbd.cbs.LL(params = params, 
+                                cal.cbs = cal.cbs, 
+                                hardie = hardie))
     }
     logparams <- log(par.start)
     if(hessian == TRUE) {
@@ -586,7 +590,7 @@ pnbd.pmf.General <- function(params,
                              t.start, 
                              t.end, 
                              x, 
-                             hardie) {
+                             hardie = TRUE) {
   if (any(t.start > t.end)) {
     stop("Error in pnbd.pmf.General: t.start > t.end.")
   }
@@ -762,14 +766,14 @@ pnbd.ConditionalExpectedTransactions <- function(params,
                                                  x, 
                                                  t.x, 
                                                  T.cal, 
-                                                 hardie) {
+                                                 hardie = TRUE) {
   inputs <- try(dc.InputCheck(params = params, 
-                                    func = "pnbd.ConditionalExpectedTransactions", 
-                                    printnames = c("r", "alpha", "s", "beta"), 
-                                    T.star = T.star, 
-                                    x = x, 
-                                    t.x = t.x, 
-                                    T.cal = T.cal))
+                              func = "pnbd.ConditionalExpectedTransactions", 
+                              printnames = c("r", "alpha", "s", "beta"), 
+                              T.star = T.star, 
+                              x = x, 
+                              t.x = t.x, 
+                              T.cal = T.cal))
   if('try-error' == class(inputs)) return(str(inputs)$message)
 
   T.star <- inputs$T.star
@@ -784,7 +788,11 @@ pnbd.ConditionalExpectedTransactions <- function(params,
     
   P1 <- (r + x) * (beta + T.cal)/((alpha + T.cal) * (s - 1))
   P2 <- (1 - ((beta + T.cal)/(beta + T.cal + T.star))^(s - 1))
-  P3 <- pnbd.PAlive(params, x, t.x, T.cal, hardie)
+  P3 <- pnbd.PAlive(params = params, 
+                    x = x, 
+                    t.x = t.x, 
+                    T.cal = T.cal, 
+                    hardie = hardie)
   return(P1 * P2 * P3)
 }
 
@@ -834,7 +842,10 @@ pnbd.ConditionalExpectedTransactions <- function(params,
 #'          t = 30, 
 #'          x = 11:20, 
 #'          hardie = TRUE)
-pnbd.pmf <- function(params, t, x, hardie) {
+pnbd.pmf <- function(params, 
+                     t, 
+                     x, 
+                     hardie = TRUE) {
   inputs <- try(dc.InputCheck(params = params, 
                               func = "pnbd.pmf", 
                               printnames = c("r", "alpha", "s", "beta"), 
@@ -1013,7 +1024,7 @@ pnbd.ExpectedCumulativeTransactions <- function(params,
 pnbd.PlotFrequencyInCalibration <- function(params, 
                                             cal.cbs, 
                                             censor, 
-                                            hardie,
+                                            hardie = TRUE,
                                             plotZero = TRUE, 
                                             xlab = "Calibration period transactions", 
                                             ylab = "Customers", 
@@ -1154,7 +1165,7 @@ pnbd.PlotFreqVsConditionalExpectedFrequency <- function(params,
                                                         cal.cbs, 
                                                         x.star, 
                                                         censor, 
-                                                        hardie,
+                                                        hardie = TRUE,
                                                         xlab = "Calibration period transactions", 
                                                         ylab = "Holdout period transactions", 
                                                         xticklab = NULL, 
@@ -1313,7 +1324,7 @@ pnbd.PlotRecVsConditionalExpectedFrequency <- function(params,
                                                        cal.cbs, 
                                                        T.star, 
                                                        x.star, 
-                                                       hardie,
+                                                       hardie = TRUE,
                                                        xlab = "Calibration period recency", 
                                                        ylab = "Holdout period transactions", 
                                                        xticklab = NULL, 
@@ -1476,7 +1487,7 @@ pnbd.Plot.DERT <- function(params,
                            t.x, 
                            T.cal, 
                            d, 
-                           hardie, 
+                           hardie = TRUE, 
                            type = "persp") {
   # No use for inputs, other than as error check.
   inputs <- try(dc.InputCheck(params = params, 

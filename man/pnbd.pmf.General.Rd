@@ -4,7 +4,7 @@
 \alias{pnbd.pmf.General}
 \title{Generalized Pareto/NBD Probability Mass Function}
 \usage{
-pnbd.pmf.General(params, t.start, t.end, x, hardie)
+pnbd.pmf.General(params, t.start, t.end, x, hardie = TRUE)
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

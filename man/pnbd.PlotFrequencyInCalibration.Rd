@@ -8,7 +8,7 @@ pnbd.PlotFrequencyInCalibration(
   params,
   cal.cbs,
   censor,
-  hardie,
+  hardie = TRUE,
   plotZero = TRUE,
   xlab = "Calibration period transactions",
   ylab = "Customers",

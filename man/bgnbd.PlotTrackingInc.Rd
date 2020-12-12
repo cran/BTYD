@@ -10,7 +10,7 @@ bgnbd.PlotTrackingInc(
   T.tot,
   actual.inc.tracking.data,
   n.periods.final = NA,
-  hardie,
+  hardie = TRUE,
   xlab = "Week",
   ylab = "Transactions",
   xticklab = NULL,

@@ -4,7 +4,7 @@
 \alias{pnbd.PAlive}
 \title{Pareto/NBD P(Alive)}
 \usage{
-pnbd.PAlive(params, x, t.x, T.cal, hardie)
+pnbd.PAlive(params, x, t.x, T.cal, hardie = TRUE)
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

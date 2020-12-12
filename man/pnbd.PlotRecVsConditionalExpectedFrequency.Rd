@@ -9,7 +9,7 @@ pnbd.PlotRecVsConditionalExpectedFrequency(
   cal.cbs,
   T.star,
   x.star,
-  hardie,
+  hardie = TRUE,
   xlab = "Calibration period recency",
   ylab = "Holdout period transactions",
   xticklab = NULL,

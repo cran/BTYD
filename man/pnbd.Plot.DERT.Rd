@@ -4,7 +4,7 @@
 \alias{pnbd.Plot.DERT}
 \title{Pareto/NBD Plot Discounted Expected Residual Transactions}
 \usage{
-pnbd.Plot.DERT(params, x, t.x, T.cal, d, hardie, type = "persp")
+pnbd.Plot.DERT(params, x, t.x, T.cal, d, hardie = TRUE, type = "persp")
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

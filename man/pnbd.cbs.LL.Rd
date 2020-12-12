@@ -4,7 +4,7 @@
 \alias{pnbd.cbs.LL}
 \title{Pareto/NBD Log-Likelihood}
 \usage{
-pnbd.cbs.LL(params, cal.cbs, hardie)
+pnbd.cbs.LL(params, cal.cbs, hardie = TRUE)
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

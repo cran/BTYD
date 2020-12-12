@@ -4,7 +4,7 @@
 \alias{pnbd.pmf}
 \title{Pareto/NBD Probability Mass Function}
 \usage{
-pnbd.pmf(params, t, x, hardie)
+pnbd.pmf(params, t, x, hardie = TRUE)
 }
 \arguments{
 \item{params}{Pareto/NBD parameters - a vector with r, alpha, s, and beta, in

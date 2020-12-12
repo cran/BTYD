@@ -23,7 +23,7 @@ dc.PlotLogLikelihoodContours(
 
 \item{...}{all additional arguments required by the log-likelihood
 function. For example, \code{\link{bgbb.rf.matrix.LL}} requires rf.matrix;
-\code{\link{pnbd.cbs.LL}} requires cal.cbs and hardie; and \code{\link{bgnbd.cbs.LL}} requires
+\code{\link{pnbd.cbs.LL}} requires cal.cbs and hardie (defaults to TRUE); and \code{\link{bgnbd.cbs.LL}} requires
 cal.cbs.}
 
 \item{n.divs}{integer representing how fine-grained the contour plot is. A

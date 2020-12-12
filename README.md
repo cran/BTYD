@@ -1,7 +1,8 @@
-# BTYD 2.4.1
+# BTYD 2.4.2
 
 A patch for the `pnbd.LL()` function in the original [BTYD](https://CRAN.R-project.org/package=BTYD) package, 
-first proposed by [Theo Strinopoulos](https://github.com/theofilos). 
+first proposed by [Theo Strinopoulos](https://github.com/theofilos). Now on [CRAN](https://CRAN.R-project.org/package=BTYD), 
+so you can get it the usual way, with `install.packages()`.
 
 ## Justification
 
@@ -14,7 +15,7 @@ groups. I explained these changes are explained in separate documentation (fix_p
 and checked that it would return the same numbers as BTYD 2.4 did when running the examples in the original BTYD vignette (see 
 threeway_walkthrough.R).
 
-## How to install
+## How to install from here
 
 First `git clone`. 
 

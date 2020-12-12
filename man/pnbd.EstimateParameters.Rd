@@ -9,7 +9,7 @@ pnbd.EstimateParameters(
   par.start = c(1, 1, 1, 1),
   max.param.value = 10000,
   method = "L-BFGS-B",
-  hardie,
+  hardie = TRUE,
   hessian = FALSE
 )
 }

@@ -1,7 +1,7 @@
 Package: BTYD
 Type: Package
 Title: Implementing BTYD Models with the Log Sum Exp Patch
-Version: 2.4.1
+Version: 2.4.2
 Authors@R: c(person("Lukasz", "Dziurzynski", role="aut"),
              person("Edward", "Wadsworth", role="aut"), 
              person("Peter", "Fader", role="ctb"), 
@@ -36,6 +36,6 @@ Author: Lukasz Dziurzynski [aut],
 NeedsCompilation: no
 Encoding: UTF-8
 RoxygenNote: 7.1.1
-Packaged: 2020-11-18 22:58:37 UTC; ghuiber
+Packaged: 2020-12-11 23:06:03 UTC; ghuiber
 Repository: CRAN
-Date/Publication: 2020-11-30 12:30:02 UTC
+Date/Publication: 2020-12-12 05:20:02 UTC

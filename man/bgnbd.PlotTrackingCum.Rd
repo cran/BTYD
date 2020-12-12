@@ -10,7 +10,7 @@ bgnbd.PlotTrackingCum(
   T.tot,
   actual.cu.tracking.data,
   n.periods.final = NA,
-  hardie,
+  hardie = TRUE,
   xlab = "Week",
   ylab = "Cumulative Transactions",
   xticklab = NULL,
