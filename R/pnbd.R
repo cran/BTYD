@@ -435,9 +435,8 @@ pnbd.cbs.LL <- function(params,
 #' Pareto/NBD parameters cannot be negative. The upper bound can be set with the
 #' max.param.value parameter.
 #'
-#' This function may take some time to run. Unlike the original BTYD package,
-#' this function uses \code{\link[optimx]{optimx}} instead of
-#' \code{\link[stats]{optim}} for maximum likelihood estimation.
+#' This function may take some time to run. It uses \code{\link[optimx]{optimx}} 
+#' for maximum likelihood estimation, not \code{\link[stats]{optim}}.
 #'
 #' @param cal.cbs calibration period CBS (customer by sufficient statistic). It
 #'   must contain columns for frequency ("x"), recency ("t.x"), and total time
@@ -463,7 +462,6 @@ pnbd.cbs.LL <- function(params,
 #' @return Unnamed vector of estimated parameters by default, \code{optimx}
 #'   object with everything if \code{hessian} is TRUE.
 #' @seealso \code{\link{pnbd.cbs.LL}}
-#' @seealso \url{https://www.ibm.com/developerworks/library/ba-optimR-john-nash/}
 #' @references Fader, Peter S.; Hardie, and Bruce G.S.. "Overcoming the BG/NBD
 #'   Model's #NUM! Error Problem." December. 2013. Web.
 #'   \url{http://brucehardie.com/notes/027/bgnbd_num_error.pdf}
@@ -660,7 +658,7 @@ pnbd.pmf.General <- function(params,
     
     a <- w
     b <- param2
-    c <- w + x + 1
+    c <- r + s + x + 1
     z <- absab/maxab
     den <- maxab^w
     if(hardie == TRUE) return(h2f1(a, b, c, z)/den)
@@ -1606,15 +1604,17 @@ pnbd.PlotTrackingCum <- function(params,
                                  ylab = "Cumulative Transactions", 
                                  xticklab = NULL, 
                                  title = "Tracking Cumulative Transactions") {
-  # No use for inputs, other than as error check.
-  inputs <- try(dc.InputCheck(params = params, 
-                                func = "pnbd.PlotTrackingCum", 
-                                printnames = c("r", "alpha", "s", "beta"), 
-                                T.cal = T.cal, 
-                                T.tot = T.tot,
-                                actual.cu.tracking.data = actual.cu.tracking.data, 
-                                n.periods.final = n.periods.final))
+  # No use for inputs, other than as error check, so suppress
+  # any warnings about incompatible vector lengths here:
+  inputs <- suppressWarnings(try(dc.InputCheck(params = params, 
+                                               func = "pnbd.PlotTrackingCum", 
+                                               printnames = c("r", "alpha", "s", "beta"), 
+                                               T.cal = T.cal, 
+                                               T.tot = T.tot,
+                                               actual.cu.tracking.data = actual.cu.tracking.data, 
+                                               n.periods.final = n.periods.final)))
   if('try-error' == class(inputs)) return(str(inputs)$message)
+  inputs <- NULL
   if (length(T.tot) > 1) stop("T.tot must be a single numeric value and may not be negative.")
   
   actual <- actual.cu.tracking.data
@@ -1707,15 +1707,17 @@ pnbd.PlotTrackingInc <- function(params,
                                  ylab = "Transactions", 
                                  xticklab = NULL, 
                                  title = "Tracking Weekly Transactions") {
-  # No use for inputs, other than as error check.
-  inputs <- try(dc.InputCheck(params = params, 
-                                func = "pnbd.PlotTrackingInc", 
-                                printnames = c("r", "alpha", "s", "beta"), 
-                                T.cal = T.cal, 
-                                T.tot = T.tot,
-                                actual.inc.tracking.data = actual.inc.tracking.data, 
-                                n.periods.final = n.periods.final))
+  # No use for inputs, other than as error check, so suppress
+  # any warnings about incompatible vector lengths here:
+  inputs <- suppressWarnings(try(dc.InputCheck(params = params, 
+                                               func = "pnbd.PlotTrackingInc", 
+                                               printnames = c("r", "alpha", "s", "beta"), 
+                                               T.cal = T.cal, 
+                                               T.tot = T.tot,
+                                               actual.inc.tracking.data = actual.inc.tracking.data, 
+                                               n.periods.final = n.periods.final)))
   if('try-error' == class(inputs)) return(str(inputs)$message)
+  inputs <- NULL
   if (length(T.tot) > 1) stop("T.tot must be a single numeric value and may not be negative.")
   
   actual <- actual.inc.tracking.data

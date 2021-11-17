@@ -27,22 +27,22 @@ elog <- dc.ReadLines(cdnowElog, cust.idx = 2,
 elog[1:3,]
 
 ## ----message=FALSE------------------------------------------------------------
-elog$date <- as.Date(elog$date, "%Y%m%d");
+elog$date <- as.Date(elog$date, "%Y%m%d")
 elog[1:3,]
 
 ## ----results="hide", message=FALSE--------------------------------------------
-elog <- dc.MergeTransactionsOnSameDate(elog);
+elog <- dc.MergeTransactionsOnSameDate(elog)
 
 ## ----message=FALSE------------------------------------------------------------
 end.of.cal.period <- as.Date("1997-09-30")
 elog.cal <- elog[which(elog$date <= end.of.cal.period), ]
 
 ## ----results="hide", message=FALSE--------------------------------------------
-split.data <- dc.SplitUpElogForRepeatTrans(elog.cal);
-clean.elog <- split.data$repeat.trans.elog;
+split.data <- dc.SplitUpElogForRepeatTrans(elog.cal)
+clean.elog <- split.data$repeat.trans.elog
 
 ## ----message=FALSE------------------------------------------------------------
-freq.cbt <- dc.CreateFreqCBT(clean.elog);
+freq.cbt <- dc.CreateFreqCBT(clean.elog)
 freq.cbt[1:3,1:5]
 
 ## ----results="hide", message=FALSE--------------------------------------------
@@ -59,7 +59,7 @@ cal.cbs <- dc.BuildCBSFromCBTAndDates(cal.cbt, cal.cbs.dates,
 
 ## ----warning=FALSE------------------------------------------------------------
 params <- pnbd.EstimateParameters(cal.cbs = cal.cbs, 
-                                  hardie = allHardie);
+                                  hardie = allHardie)
 round(params, digits = 3)
 LL <- pnbd.cbs.LL(params = params, 
                   cal.cbs = cal.cbs, 
@@ -132,10 +132,10 @@ for (i in seq(10, 25, 5)){
 #                                  hardie = allHardie)
 
 ## ----message=FALSE------------------------------------------------------------
-elog <- dc.SplitUpElogForRepeatTrans(elog)$repeat.trans.elog;
-x.star <- rep(0, nrow(cal.cbs));
-cal.cbs <- cbind(cal.cbs, x.star);
-elog.custs <- elog$cust;
+elog <- dc.SplitUpElogForRepeatTrans(elog)$repeat.trans.elog
+x.star <- rep(0, nrow(cal.cbs))
+cal.cbs <- cbind(cal.cbs, x.star)
+elog.custs <- elog$cust
 for (i in 1:nrow(cal.cbs)){
   current.cust <- rownames(cal.cbs)[i]
   tot.cust.trans <- length(which(elog.custs == current.cust))
@@ -164,8 +164,8 @@ tot.cbt <- dc.CreateFreqCBT(elog)
 d.track.data <- rep(0, 7 * 78)
 origin <- as.Date("1997-01-01")
 for (i in colnames(tot.cbt)){
-  date.index <- difftime(as.Date(i), origin) + 1;
-  d.track.data[date.index] <- sum(tot.cbt[,i]);
+  date.index <- difftime(as.Date(i), origin) + 1
+  d.track.data[date.index] <- sum(tot.cbt[,i])
 }
 w.track.data <-  rep(0, 78)
 for (j in 1:78){

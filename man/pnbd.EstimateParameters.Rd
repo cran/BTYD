@@ -63,9 +63,8 @@ The lower bound on the parameters to be estimated is always zero, since
 Pareto/NBD parameters cannot be negative. The upper bound can be set with the
 max.param.value parameter.
 
-This function may take some time to run. Unlike the original BTYD package,
-this function uses \code{\link[optimx]{optimx}} instead of
-\code{\link[stats]{optim}} for maximum likelihood estimation.
+This function may take some time to run. It uses \code{\link[optimx]{optimx}}
+for maximum likelihood estimation, not \code{\link[stats]{optim}}.
 }
 \examples{
 data(cdnowSummary)
@@ -98,6 +97,4 @@ Model's #NUM! Error Problem." December. 2013. Web.
 }
 \seealso{
 \code{\link{pnbd.cbs.LL}}
-
-\url{https://www.ibm.com/developerworks/library/ba-optimR-john-nash/}
 }

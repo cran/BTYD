@@ -122,11 +122,18 @@ Fader, Peter S., and Bruce G.S. Hardie. \dQuote{Creating an RFM summary using Ex
 
 Fader, Peter S., Bruce G.S. Hardie, and Jen Shang. \dQuote{Customer-Base Analysis in a Discrete-Time Noncontractual Setting.} \emph{Marketing Science} 29(6), pp. 1086-1108. 2010. INFORMS. \url{http://www.brucehardie.com/papers/020/}
 
-Jerath, Kinshuk, Peter S. Fader, and Bruce G.S. Hardie. \dQuote{Customer-Base Analysis on a 'Data Diet': Model Inference Using Repeated Cross-Sectional Summary (RCSS) Data.} June. 2011. Available at SSRN: \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1708562} or \url{http://dx.doi.org/10.2139/ssrn.1708562}
+Jerath, Kinshuk, Peter S. Fader, and Bruce G.S. Hardie. \dQuote{Customer-Base Analysis on a 'Data Diet': Model Inference Using Repeated Cross-Sectional Summary (RCSS) Data.} June. 2011. Available at SSRN: \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1708562} or \doi{10.2139/ssrn.1708562}
 
 Fader, Peter S., Bruce G.S. Hardie, and Ka L. Lee. \dQuote{``Counting Your Customers'' the Easy Way: An Alternative to the Pareto/NBD Model.} \emph{Marketing Science} Vol.24, pp.275-284. Spring. 2005. \url{http://www.brucehardie.com/papers.html}
 
 Fader, Peter S., Hardie, Bruce G.S., and Lee, Ka Lok. \dQuote{Computing P(alive) Using the BG/NBD Model.} December. 2008. Web. \url{http://www.brucehardie.com/notes/021/palive_for_BGNBD.pdf}
+}
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/ghuiber/BTYD/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Gabi Huiber \email{ghuiber@gmail.com} [contributor]

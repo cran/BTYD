@@ -26,14 +26,14 @@ Otherwise, build the standard way in two steps:
 1. At the command line, build and check the source tarball:
 
 ```
-R CMD build BTYD2
-R CMD check BTYD2_2.4.1.tar.gz
+R CMD build BTYD
+R CMD check BTYD_2.4.2.tar.gz
 ```
 
 2. Then, at the R console, install it:
 
 ```
-install.packages("BTYD2_2.4.tar.gz", repos = NULL, type = "source")
+install.packages("BTYD2_2.4.2.tar.gz", repos = NULL, type = "source")
 # works only in RStudio:
 .rs.restartR()
 ```
